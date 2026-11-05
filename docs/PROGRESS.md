@@ -12,7 +12,7 @@ Agent: centang `[x]` setelah tahap lulus `lint` + `build` + verifikasi di `docs/
 - [x] **5. Pembayaran simulasi + tiket**: bayar sukses/gagal, tiket + QR, halaman pesanan/tiket, kirim WhatsApp Fonnte (non-blocking)
 - [x] **6. Admin dasar**: login, dashboard, wizard buat event (template manual), zona & harga, publish
 - [x] **7. Check-in + monitoring**: scanner, 3 hasil, denah live hijau, statistik, peserta/transaksi, CSV
-- [ ] **8. AI layout**: unggah foto + deskripsi → Gemini → preview → koreksi → simpan; fallback manual
+- [x] **8. AI layout**: unggah foto + deskripsi → Gemini → preview → koreksi → simpan; fallback manual
 - [ ] **9. Polish & rilis**: poster (Vercel Blob), state kosong/error, QA HP, README, jalankan DEMO_SCRIPT di Vercel
 
 ## Kontrak env final (isi oleh agent di Tahap 1)
