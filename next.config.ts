@@ -1,9 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
-  cacheComponents: true,
-  partialPrefetching: true,
+  // Cache Components sengaja dimatikan: semua data (status kursi, pesanan)
+  // harus segar per request. Lihat docs/PROGRESS.md bagian Keputusan.
   turbopack: {
     rules: {
       "*.css": {
