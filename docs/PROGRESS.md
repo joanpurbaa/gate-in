@@ -7,7 +7,7 @@ Agent: centang `[x]` setelah tahap lulus `lint` + `build` + verifikasi di `docs/
 - [x] **0. Orientasi** — baca semua dokumen, rangkum pemahaman (tanpa kode)
 - [x] **1. Fondasi**: Prisma + Neon, skema, migrasi, seed dasar, `db.ts`, `.env.example`, nama env final
 - [x] **2. Generator layout + SeatMap**: grid & lingkaran, SVG pan/zoom, halaman `/dev/seatmap`, seed 2 layout
-- [ ] **3. Alur pengunjung bagian 1**: beranda, detail event, data diri, denah pilih kursi, polling status
+- [x] **3. Alur pengunjung bagian 1**: beranda, detail event, data diri, denah pilih kursi, polling status
 - [ ] **4. Locking kursi + pesanan**: hold atomik, timer, ringkasan, release, pesanan kedaluwarsa
 - [ ] **5. Pembayaran simulasi + tiket**: bayar sukses/gagal, tiket + QR, halaman pesanan/tiket, kirim WhatsApp Fonnte (non-blocking)
 - [ ] **6. Admin dasar**: login, dashboard, wizard buat event (template manual), zona & harga, publish
