@@ -11,7 +11,9 @@ import {
   MapPin,
   RefreshCw,
   User,
+  XCircle,
 } from "lucide-react";
+import { CountdownBar } from "@/components/seatmap/CountdownBar";
 import { SeatMap } from "@/components/seatmap/SeatMap";
 import { SelectedSeatsBar, type SelectedSeatSummary } from "@/components/seatmap/SelectedSeatsBar";
 import type { SeatEffectiveStatus, SeatMapItem, SeatZoneInfo } from "@/components/seatmap/types";
@@ -36,6 +38,14 @@ interface BookingFlowClientProps {
   initialSeats: SeatMapItem[];
 }
 
+interface HeldOrderState {
+  orderId: string;
+  holdExpiresAt: string;
+  totalAmount: number;
+  seats: { id: string; label: string; zoneName: string; price: number }[];
+  expired: boolean;
+}
+
 export function BookingFlowClient({
   event,
   layout,
@@ -50,12 +60,14 @@ export function BookingFlowClient({
 
   const [seats, setSeats] = useState<SeatMapItem[]>(initialSeats);
   const [selectedLabels, setSelectedLabels] = useState<string[]>([]);
+  const [submittingHold, setSubmittingHold] = useState(false);
+  const [releasingHold, setReleasingHold] = useState(false);
+  const [heldOrder, setHeldOrder] = useState<HeldOrderState | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [lastSyncedAt, setLastSyncedAt] = useState<Date>(new Date());
 
   const zoneMap = useMemo(() => new Map(zones.map((z) => [z.id, z])), [zones]);
 
-  // Polling status kursi tiap 5 detik saat berada di langkah denah
   const refreshSeatStatuses = useCallback(async () => {
     try {
       const res = await fetch(`/api/events/${event.slug}/seats`, { cache: "no-store" });
@@ -84,7 +96,7 @@ export function BookingFlowClient({
         const lost = prevSelected.filter((lbl) => statusByLabel.get(lbl) !== "AVAILABLE");
         if (lost.length > 0) {
           setToast(
-            `Kursi ${lost.join(", ")} baru saja dipilih pengunjung lain. Silakan pilih kursi lain.`
+            `Kursi ${lost.join(", ")} baru saja diambil pengunjung lain. Silakan pilih kursi lain.`
           );
           return prevSelected.filter((lbl) => statusByLabel.get(lbl) === "AVAILABLE");
         }
@@ -158,7 +170,74 @@ export function BookingFlowClient({
       .filter((x): x is SelectedSeatSummary => x !== null);
   }, [seats, selectedLabels, zoneMap]);
 
-  const totalPrice = selectedSummaries.reduce((acc, s) => acc + s.price, 0);
+  const handleHoldAndProceed = async () => {
+    if (selectedLabels.length === 0 || submittingHold) return;
+    setSubmittingHold(true);
+    setToast(null);
+
+    try {
+      const res = await fetch("/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          eventId: event.id,
+          buyerName,
+          buyerPhone: normalizedPhone,
+          seatLabels: selectedLabels,
+        }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        if (res.status === 409 && data.code === "SEATS_TAKEN") {
+          const taken: string[] = Array.isArray(data.takenLabels) ? data.takenLabels : [];
+          setToast(
+            data.error ||
+              `Kursi ${taken.join(", ")} baru saja diambil, pilih kursi lain.`
+          );
+          if (taken.length > 0) {
+            const takenSet = new Set(taken);
+            setSelectedLabels((prev) => prev.filter((l) => !takenSet.has(l)));
+          }
+          await refreshSeatStatuses();
+          return;
+        }
+        setToast(data.error || "Gagal menahan kursi. Silakan coba lagi.");
+        await refreshSeatStatuses();
+        return;
+      }
+
+      setHeldOrder({
+        orderId: data.orderId,
+        holdExpiresAt: data.holdExpiresAt,
+        totalAmount: data.totalAmount,
+        seats: data.seats,
+        expired: false,
+      });
+      setStep(3);
+    } catch {
+      setToast("Gagal menghubungi server. Periksa koneksi Anda dan coba lagi.");
+    } finally {
+      setSubmittingHold(false);
+    }
+  };
+
+  const handleCancelOrder = async () => {
+    if (!heldOrder || releasingHold) return;
+    setReleasingHold(true);
+    try {
+      await fetch(`/api/orders/${heldOrder.orderId}/release`, { method: "POST" });
+    } catch {
+      // Abaikan bila gagal jaringan; kursi tetap akan rilis saat kadaluwarsa
+    } finally {
+      setReleasingHold(false);
+      setHeldOrder(null);
+      setSelectedLabels([]);
+      await refreshSeatStatuses();
+      setStep(2);
+      setToast("Pesanan dibatalkan dan kursi telah dikembalikan ke denah.");
+    }
+  };
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-5 pb-28">
@@ -343,62 +422,112 @@ export function BookingFlowClient({
           <SelectedSeatsBar
             selected={selectedSummaries}
             maxSeats={event.maxSeatsPerOrder}
+            loading={submittingHold}
+            ctaLabel="Tahan Kursi & Lanjut"
             onRemoveSeat={(lbl) =>
               setSelectedLabels((prev) => prev.filter((item) => item !== lbl))
             }
-            onSubmit={() => setStep(3)}
+            onSubmit={handleHoldAndProceed}
           />
         </section>
       )}
 
-      {/* LANGKAH 3: PLACEHOLDER RINGKASAN (TAHAP 3; DI TAHAP 4 TERHUBUNG KE LOCKING PESANAN) */}
-      {step === 3 && (
-        <section className="mx-auto max-w-lg rounded-2xl border border-stone-200 bg-white p-5 shadow-xs sm:p-6">
-          <div className="flex items-center gap-2.5 text-emerald-700">
-            <CheckCircle2 className="h-5 w-5" />
-            <h2 className="text-base font-bold text-stone-900">Pratinjau Ringkasan Pilihan Kursi</h2>
-          </div>
+      {/* LANGKAH 3: RINGKASAN PESANAN & HITUNG MUNDUR HOLD */}
+      {step === 3 && heldOrder && (
+        <section className="mx-auto max-w-lg space-y-4">
+          <CountdownBar
+            expiresAt={heldOrder.holdExpiresAt}
+            onExpire={() =>
+              setHeldOrder((prev) => (prev ? { ...prev, expired: true } : null))
+            }
+          />
 
-          <dl className="mt-4 space-y-2 border-t border-stone-200 pt-3 text-xs">
-            <div className="flex justify-between">
-              <dt className="text-stone-500">Nama Pemesan</dt>
-              <dd className="font-semibold text-stone-900">{buyerName}</dd>
+          <div className="rounded-2xl border border-stone-200 bg-white p-5 shadow-xs sm:p-6">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 text-emerald-700">
+                <CheckCircle2 className="h-5 w-5" />
+                <h2 className="text-base font-bold text-stone-900">Ringkasan Pesanan</h2>
+              </div>
+              <span
+                className={`rounded-full border px-2.5 py-0.5 text-[11px] font-semibold ${
+                  heldOrder.expired
+                    ? "border-rose-200 bg-rose-50 text-rose-800"
+                    : "border-amber-200 bg-amber-50 text-amber-900"
+                }`}
+              >
+                {heldOrder.expired ? "KEDALUWARSA" : "KURSI DITAHAN (PENDING)"}
+              </span>
             </div>
-            <div className="flex justify-between">
-              <dt className="text-stone-500">Nomor WhatsApp</dt>
-              <dd className="font-mono font-semibold text-stone-900">{normalizedPhone}</dd>
-            </div>
-          </dl>
 
-          <div className="mt-4 border-t border-stone-200 pt-3">
-            <div className="text-xs font-semibold text-stone-700">Daftar Kursi Dipilih</div>
-            <ul className="mt-2 space-y-2">
-              {selectedSummaries.map((s) => (
-                <li
-                  key={s.label}
-                  className="flex items-center justify-between rounded-xl border border-stone-200 bg-stone-50 px-3 py-2 text-xs"
+            <dl className="mt-4 space-y-2 border-t border-stone-200 pt-3.5 text-xs">
+              <div className="flex justify-between">
+                <dt className="text-stone-500">ID Pesanan</dt>
+                <dd className="font-mono font-semibold text-stone-800">{heldOrder.orderId}</dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="text-stone-500">Nama Pemesan</dt>
+                <dd className="font-semibold text-stone-900">{buyerName}</dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="text-stone-500">Nomor WhatsApp</dt>
+                <dd className="font-mono font-semibold text-stone-900">{normalizedPhone}</dd>
+              </div>
+            </dl>
+
+            <div className="mt-4 border-t border-stone-200 pt-3.5">
+              <div className="text-xs font-semibold text-stone-700">
+                Kursi yang Ditahan ({heldOrder.seats.length})
+              </div>
+              <ul className="mt-2 space-y-2">
+                {heldOrder.seats.map((s) => (
+                  <li
+                    key={s.label}
+                    className="flex items-center justify-between rounded-xl border border-stone-200 bg-stone-50 px-3.5 py-2.5 text-xs"
+                  >
+                    <div>
+                      <span className="font-mono font-bold text-stone-900">Kursi {s.label}</span>
+                      <span className="ml-2 text-stone-600">• Zona {s.zoneName}</span>
+                    </div>
+                    <span className="font-semibold text-stone-900">{formatRupiah(s.price)}</span>
+                  </li>
+                ))}
+              </ul>
+
+              <div className="mt-3.5 flex items-center justify-between border-t border-stone-200 pt-3.5 text-base font-bold text-stone-900">
+                <span>Total Pembayaran</span>
+                <span>{formatRupiah(heldOrder.totalAmount)}</span>
+              </div>
+            </div>
+
+            <div className="mt-6 flex flex-col gap-2.5">
+              {!heldOrder.expired ? (
+                <Link
+                  href={`/bayar/${heldOrder.orderId}`}
+                  className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#3730A3] px-5 py-3 text-sm font-semibold text-white shadow-xs transition hover:bg-indigo-900"
                 >
-                  <span className="font-mono font-bold text-stone-900">
-                    Kursi {s.label} • {s.zoneName}
-                  </span>
-                  <span className="font-semibold text-stone-900">{formatRupiah(s.price)}</span>
-                </li>
-              ))}
-            </ul>
-            <div className="mt-3 flex items-center justify-between border-t border-stone-200 pt-3 text-sm font-bold text-stone-900">
-              <span>Total</span>
-              <span>{formatRupiah(totalPrice)}</span>
-            </div>
-          </div>
+                  <span>Lanjut ke Pembayaran</span>
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleCancelOrder}
+                  className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#3730A3] px-5 py-3 text-sm font-semibold text-white"
+                >
+                  <span>Pilih Kursi Kembali di Denah</span>
+                </button>
+              )}
 
-          <div className="mt-5 flex gap-2">
-            <button
-              type="button"
-              onClick={() => setStep(2)}
-              className="min-h-11 flex-1 rounded-xl border border-stone-300 bg-white px-4 py-2.5 text-xs font-semibold text-stone-800 hover:bg-stone-50"
-            >
-              Ubah Pilihan Kursi
-            </button>
+              <button
+                type="button"
+                disabled={releasingHold}
+                onClick={handleCancelOrder}
+                className="inline-flex min-h-11 w-full items-center justify-center gap-1.5 rounded-xl border border-stone-300 bg-white px-4 py-2.5 text-xs font-semibold text-stone-700 hover:bg-stone-50"
+              >
+                <XCircle className="h-4 w-4 text-stone-500" />
+                <span>{releasingHold ? "Membatalkan..." : "Batalkan & Lepas Kursi"}</span>
+              </button>
+            </div>
           </div>
         </section>
       )}

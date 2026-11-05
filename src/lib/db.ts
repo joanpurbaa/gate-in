@@ -1,8 +1,14 @@
+import { existsSync } from "node:fs";
 import { neonConfig } from "@neondatabase/serverless";
 import { PrismaNeon } from "@prisma/adapter-neon";
-import { PrismaClient } from "@/generated/prisma/client";
+import { PrismaClient } from "../generated/prisma/client.ts";
 
-// Node 22+ punya WebSocket global; dipakai driver Neon untuk transaksi interaktif.
+if (!process.env.DATABASE_URL) {
+  for (const file of [".env.local", ".env"]) {
+    if (existsSync(file)) process.loadEnvFile(file);
+  }
+}
+
 if (typeof WebSocket !== "undefined" && !neonConfig.webSocketConstructor) {
   neonConfig.webSocketConstructor = WebSocket;
 }
