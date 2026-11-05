@@ -13,7 +13,7 @@ Agent: centang `[x]` setelah tahap lulus `lint` + `build` + verifikasi di `docs/
 - [x] **6. Admin dasar**: login, dashboard, wizard buat event (template manual), zona & harga, publish
 - [x] **7. Check-in + monitoring**: scanner, 3 hasil, denah live hijau, statistik, peserta/transaksi, CSV
 - [x] **8. AI layout**: unggah foto + deskripsi → Gemini → preview → koreksi → simpan; fallback manual
-- [ ] **9. Polish & rilis**: poster (Vercel Blob), state kosong/error, QA HP, README, jalankan DEMO_SCRIPT di Vercel
+- [x] **9. Polish & rilis**: poster (Vercel Blob), state kosong/error, QA HP, README, jalankan DEMO_SCRIPT di Vercel
 
 ## Kontrak env final (isi oleh agent di Tahap 1)
 
@@ -34,6 +34,9 @@ Agent: centang `[x]` setelah tahap lulus `lint` + `build` + verifikasi di `docs/
 - **Prisma 7.10.1 stabil**: `npm install prisma` tanpa versi menarik `8.0.0-rc.30`; dikunci ke `7.10.1` agar selaras dengan `@prisma/client@7.10.1` dan `@prisma/adapter-neon@7.10.1`.
 - **Next.js 16 `cacheComponents`**: dimatikan di `next.config.ts` karena aplikasi ticketing membutuhkan pembacaan status kursi dan pesanan yang selalu segar per request.
 - **Schema `neon_auth` bawaan Neon**: dibiarkan tidak tersentuh; semua tabel aplikasi berada di schema `public`.
+- **Atomic Seat Locking (`src/lib/seats.ts`)**: menggunakan satu statement CTE `SELECT ... ORDER BY "id" FOR UPDATE` + `UPDATE "Seat"` untuk mencegah race condition sekaligus mencegah deadlock pada pemilihan multi-kursi. Diuji dengan 8 request paralel di `scripts/test-locking.ts`.
+- **AI Layout Fallback Kuota Free Tier (`src/lib/ai/layout.ts`)**: membaca `GEMINI_MODEL` dari env (`gemini-2.5-flash`) dan bila terkena limit RPM free tier (`429 RESOURCE_EXHAUSTED`), otomatis melakukan retry 1x ke `gemini-2.5-flash-lite` agar demo tidak gagal. Diuji pada 5 skenario di `scripts/test-ai-layout.ts`.
+- **Uji Kirim WhatsApp Fonnte**: telah diuji langsung ke nomor `082275338090` (`6282275338090`) dengan hasil `{ status: 'SENT' }` dan kode tiket `YM6D542KNM` (kursi `A-10` VIP) yang tetap aktif (`VALID`) di database bersama tiket seed `DEMO000VLD` (`VALID`) dan `DEMO000USD` (`USED`).
 
 ## Masalah Terbuka
 

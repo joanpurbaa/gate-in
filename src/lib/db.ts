@@ -5,7 +5,7 @@ import { PrismaClient } from "../generated/prisma/client.ts";
 
 if (!process.env.DATABASE_URL) {
   for (const file of [".env.local", ".env"]) {
-    if (existsSync(file)) process.loadEnvFile(file);
+    if (existsSync(/*turbopackIgnore: true*/ file)) process.loadEnvFile(file);
   }
 }
 
