@@ -9,6 +9,17 @@ import { PosterFallback } from "./PosterFallback";
 const PLACEHOLDER_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 9"><rect width="16" height="9" fill="${BRAND_COLORS.ink}"/></svg>`;
 const BLUR_DATA_URL = `data:image/svg+xml;utf8,${encodeURIComponent(PLACEHOLDER_SVG)}`;
 
+function isValidImageSrc(src: string): boolean {
+  if (!src) return false;
+  if (src.startsWith("/")) return true;
+  try {
+    const url = new URL(src);
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
 export interface PosterImageProps {
   src: string | null | undefined;
   alt: string;
@@ -36,7 +47,7 @@ export function PosterImage({
 }: PosterImageProps) {
   const [failedSrc, setFailedSrc] = useState<string | null>(null);
   const trimmed = src?.trim() ?? "";
-  const showFallback = !trimmed || failedSrc === trimmed;
+  const showFallback = !trimmed || failedSrc === trimmed || !isValidImageSrc(trimmed);
 
   return (
     <div
