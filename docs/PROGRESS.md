@@ -34,6 +34,24 @@ Agent: centang `[x]` setelah tahap lulus `lint` + `build` + verifikasi di `docs/
 
 ## Keputusan
 
+- **Tahap 14 (Halaman /docs Panduan Penggunaan & Pembersihan Tautan)**:
+  - **Pembersihan Tautan "Keunggulan GateIn"**: Tautan `/#keunggulan-gatein` dihapus murni dari navbar `PublicFooter.tsx`, sementara section `#keunggulan-gatein` di beranda tetap utuh. Tidak ada tautan lain dengan tujuan atau teks tersebut di seluruh kode aplikasi.
+  - **Rute Panduan `/docs` Ala Dokumentasi Next.js**:
+    - Metadata dilindungi dengan `robots: { index: false, follow: false }` (`noindex, nofollow`), dan tidak tercantum pada sitemap manapun.
+    - Zero external links: Tidak ada satu pun tautan menuju `/docs` dari halaman publik maupun admin. Hanya bisa dibuka dengan mengetikkan langsung alamat URL di peramban.
+    - Bilah atas tipis dengan logo GateIn yang menautkan kembali ke beranda `/`.
+    - Sidebar navigasi kiri sticky dengan input filter pencarian judul bagian secara real-time.
+    - Konten tengah dibatasi maksimal lebar 720px (`max-w-[720px]`) dengan tipografi resmi Bricolage Grotesque (judul) dan Figtree (isi).
+    - Fitur interaktif tanpa library baru: tombol salin tautan anchor (`#`) pada tiap judul dengan notifikasi visual, kotak catatan `DocsNote` (Tips hijau & Penting amber), daftar urutan langkah bernomor `NumberedSteps`, dan komponen `DocsImage` berbasis `next/image` dengan lightbox modal zoom saat gambar diklik.
+    - Bilah kanan "Di Halaman Ini" dengan pelacak gulir aktif `IntersectionObserver` dan dukungan `prefers-reduced-motion`.
+    - Pada layar mobile 390px, sidebar menjadi menu drawer slide-over dan terverifikasi `scrollWidth === clientWidth` (0 horizontal overflow).
+  - **20 Tangkapan Layar Asli via Playwright**:
+    - Diambil mandiri dari aplikasi yang berjalan lokal dengan akun demo `panitia@demo.id` dan data pembeli fiktif "Budi Demo" / `081234567890`.
+    - 8 gambar alur pengunjung pada viewport 390px (HP, skala 2x).
+    - 12 gambar alur penyelenggara pada viewport 1440px (desktop, skala 2x).
+    - Disimpan dalam format WebP terkompresi di `public/docs/` (seluruh berkas berukuran 4,6 KB s.d. 64 KB, jauh di bawah batas 200 KB).
+    - Tangkapan layar tampilan `/docs` itu sendiri disimpan di `docs/screenshots/after-14/docs-390.png` dan `docs/screenshots/after-14/docs-1440.png`.
+    - Database demo di-reset kembali secara bersih via `node prisma/seed.ts`.
 - **Pembersihan Tautan Admin & Pengalaman Publik Siap Produksi**:
   - Seluruh tombol dan tautan yang mengarah ke dashboard atau login admin (`/admin`, `/admin/login`) telah dihapus dari seluruh tampilan pengunjung (`PublicHeader.tsx`, `PublicFooter.tsx`, dan `not-found.tsx`).
   - Header publik kini berfokus murni pada pengalaman pembeli dengan CTA "Jelajahi Acara" yang mengarah mulus ke `#daftar-acara`.
