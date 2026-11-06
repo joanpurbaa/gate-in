@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 import clsx from "clsx";
 import { formatHeroDate } from "@/lib/time";
 import { formatRupiah } from "@/lib/money";
@@ -13,9 +12,27 @@ import type { EventCardData } from "@/components/ui/EventCard";
 export function HeroCarousel({ events }: { events: EventCardData[] }) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
+  const [isInView, setIsInView] = useState(true);
   const containerRef = useRef<HTMLDivElement>(null);
+  const sectionRef = useRef<HTMLElement>(null);
   const featured = events.slice(0, 5);
   const count = featured.length;
+
+  // Pantau apakah carousel sedang berada di viewport pengguna
+  useEffect(() => {
+    const el = sectionRef.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsInView(entry.isIntersecting);
+      },
+      { threshold: 0.15 }
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   const scrollToIndex = useCallback(
     (index: number) => {
@@ -25,19 +42,26 @@ export function HeroCarousel({ events }: { events: EventCardData[] }) {
       if (!container) return;
       const slide = container.children[targetIndex] as HTMLElement | undefined;
       if (slide) {
-        slide.scrollIntoView({
+        // HANYA menggeser internal scrollLeft kontainer carousel.
+        // DILARANG memakai scrollIntoView karena akan memaksa seluruh halaman (window)
+        // ter-scroll kembali ke bagian atas carousel saat pengguna membaca bagian bawah.
+        const targetLeft =
+          slide.offsetLeft - (container.clientWidth - slide.clientWidth) / 2;
+        container.scrollTo({
+          left: Math.max(0, targetLeft),
           behavior: "smooth",
-          block: "nearest",
-          inline: "center",
         });
       }
     },
     [count]
   );
 
-  // Auto-advance tiap 6 detik kecuali di-hover, disentuh, atau user memilih reduced motion
+  // Auto-advance tiap 6 detik HANYA jika:
+  // 1. Tidak di-hover/disentuh
+  // 2. Carousel sedang terlihat di viewport (tidak auto-scroll saat user di bawah)
+  // 3. User tidak memilih prefers-reduced-motion
   useEffect(() => {
-    if (count <= 1 || isPaused) return;
+    if (count <= 1 || isPaused || !isInView) return;
 
     const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
     if (mediaQuery.matches) return;
@@ -47,7 +71,7 @@ export function HeroCarousel({ events }: { events: EventCardData[] }) {
     }, 6000);
 
     return () => clearInterval(interval);
-  }, [activeIndex, count, isPaused, scrollToIndex]);
+  }, [activeIndex, count, isPaused, isInView, scrollToIndex]);
 
   // Pantau scroll manual pengguna (swipe di HP)
   const handleScroll = () => {
@@ -65,6 +89,7 @@ export function HeroCarousel({ events }: { events: EventCardData[] }) {
 
   return (
     <section
+      ref={sectionRef}
       aria-label="Acara unggulan"
       className="relative mx-auto w-full max-w-[1200px] overflow-hidden py-4 sm:py-6"
       onMouseEnter={() => setIsPaused(true)}
@@ -151,29 +176,7 @@ export function HeroCarousel({ events }: { events: EventCardData[] }) {
         })}
       </div>
 
-      {/* Navigasi Panah Desktop */}
-      {count > 1 && (
-        <>
-          <button
-            type="button"
-            onClick={() => scrollToIndex(activeIndex - 1)}
-            aria-label="Slide sebelumnya"
-            className="absolute top-1/2 left-2 hidden -translate-y-1/2 items-center justify-center rounded-full border border-line bg-card/90 p-2.5 text-ink shadow-md backdrop-blur-sm transition hover:bg-card focus-visible:ring-2 focus-visible:ring-gate sm:flex"
-          >
-            <ChevronLeft className="h-5 w-5" />
-          </button>
-          <button
-            type="button"
-            onClick={() => scrollToIndex(activeIndex + 1)}
-            aria-label="Slide berikutnya"
-            className="absolute top-1/2 right-2 hidden -translate-y-1/2 items-center justify-center rounded-full border border-line bg-card/90 p-2.5 text-ink shadow-md backdrop-blur-sm transition hover:bg-card focus-visible:ring-2 focus-visible:ring-gate sm:flex"
-          >
-            <ChevronRight className="h-5 w-5" />
-          </button>
-        </>
-      )}
-
-      {/* Titik Indikator Pagination */}
+      {/* Titik Indikator Pagination (tanpa tombol panah skip) */}
       {count > 1 && (
         <div className="mt-3 flex items-center justify-center gap-2">
           {featured.map((_, idx) => (
