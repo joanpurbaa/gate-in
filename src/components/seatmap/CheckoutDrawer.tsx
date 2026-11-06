@@ -203,7 +203,9 @@ export function CheckoutDrawer({
                   </div>
                   <input
                     id="checkout-buyer-name"
+                    name="buyerName"
                     type="text"
+                    autoComplete="name"
                     required
                     disabled={isSubmitting}
                     placeholder="Contoh: Budi Santoso"
@@ -227,8 +229,10 @@ export function CheckoutDrawer({
                   </div>
                   <input
                     id="checkout-buyer-phone"
+                    name="buyerPhone"
                     type="tel"
                     inputMode="tel"
+                    autoComplete="tel"
                     required
                     disabled={isSubmitting}
                     placeholder="Contoh: 082275338090"

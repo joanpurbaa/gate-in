@@ -1,5 +1,6 @@
 import Link from "next/link";
 import {
+  BarChart3,
   Calendar,
   Edit3,
   Eye,
@@ -86,13 +87,22 @@ export default async function AdminDashboardPage() {
             </p>
           </div>
 
-          <Link
-            href="/admin/events/new"
-            className="inline-flex min-h-12 items-center gap-2 rounded-button bg-gate px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-gate-strong sm:min-h-11"
-          >
-            <Plus className="h-4 w-4" />
-            <span>Buat acara baru</span>
-          </Link>
+          <div className="flex flex-wrap items-center gap-2">
+            <Link
+              href="/admin/analytics"
+              className="inline-flex min-h-12 items-center gap-2 rounded-button border border-line bg-card px-4 py-2.5 text-xs font-semibold text-ink transition hover:bg-page sm:min-h-11"
+            >
+              <BarChart3 className="h-4 w-4 text-gate" />
+              <span>Analitik Penjualan</span>
+            </Link>
+            <Link
+              href="/admin/events/new"
+              className="inline-flex min-h-12 items-center gap-2 rounded-button bg-gate px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-gate-strong sm:min-h-11"
+            >
+              <Plus className="h-4 w-4" />
+              <span>Buat acara baru</span>
+            </Link>
+          </div>
         </div>
 
         {/* Ringkasan Angka */}

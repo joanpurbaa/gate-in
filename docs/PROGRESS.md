@@ -40,6 +40,27 @@ Agent: centang `[x]` setelah tahap lulus `lint` + `build` + verifikasi di `docs/
 - **Schema `neon_auth` bawaan Neon**: dibiarkan tidak tersentuh; semua tabel aplikasi berada di schema `public`.
 - **Atomic Seat Locking (`src/lib/seats.ts`)**: menggunakan satu statement CTE `SELECT ... ORDER BY "id" FOR UPDATE` + `UPDATE "Seat"` untuk mencegah race condition sekaligus mencegah deadlock pada pemilihan multi-kursi. Diuji dengan 8 request paralel di `scripts/test-locking.ts`.
 - **AI Layout Fallback Kuota Free Tier (`src/lib/ai/layout.ts`)**: membaca `GEMINI_MODEL` dari env (`gemini-2.5-flash`) dan bila terkena limit RPM free tier (`429 RESOURCE_EXHAUSTED`), otomatis melakukan retry 1x ke `gemini-2.5-flash-lite` agar demo tidak gagal. Diuji pada 5 skenario di `scripts/test-ai-layout.ts`.
+- **GateIn Sales Performance Analytics (Dashboard Analitik Penyelenggara)**:
+  - **Halaman Khusus Analitik (`/admin/analytics`)**:
+    - Dashboard visual komprehensif bagi penyelenggara acara untuk memantau performa penjualan, kecepatan transaksi, dan okupansi venue secara mendalam.
+    - Dilengkapi selector filter acara, rentang waktu (7 hari, 30 hari, 90 hari, semua), granularitas (harian, mingguan, bulanan), dan toggle perbandingan periode sebelumnya.
+  - **Modul Analitik Terintegrasi**:
+    - **Modul A (Sales Trend)**: Grafik bar responsif berbasis SVG murni (tanpa library pihak ketiga) dengan metrik Gross Revenue (hanya pesanan `PAID`), tiket terjual, transaksi berhasil, dan persentase perubahan performa vs periode sebelumnya.
+    - **Modul B (Sales by Ticket Zone)**: Breakdown tiket terjual, pendapatan, persentase kontribusi kuota/revenue, okupansi per zona, dan visual stacked bar kontribusi zona.
+    - **Modul C (Sales Velocity)**: Heatmap distribusi penjualan per jam (00–23 WIB), penjualan per hari dalam seminggu, identifikasi jam & hari puncak transaksi (Peak Velocity), serta tren kecepatan penjualan mendekati Hari H (H-30+ hingga Hari H).
+    - **Modul D (Seat Occupancy Analytics)**: Metrik kapasitas venue, kursi tersedia, terjual, dan tertahan (`HELD`), konsisten dengan aturan state `src/lib/seats.ts`.
+    - **Modul E (Attendance Analytics)**: Tiket terjual, tiket hadir (`USED`), tiket belum check-in (`VALID`), persentase kehadiran, linimasa kedatangan per jam, dan performa gerbang/gate checker.
+    - **Modul F (Actionable Insights)**: Rekomendasi operasional berbasis kalkulasi metrik nyata di server (kecepatan jual, zona terlaris, bottleneck gate, dsb.) tanpa halusinasi AI/Gemini.
+  - **Ekspor Data CSV (`/api/admin/analytics/export`)**:
+    - Mendukung ekspor 3 format laporan: `sales-summary`, `zone-performance`, dan `attendance`.
+    - Dilengkapi sanitasi formula injection (`=`, `+`, `-`, `@`) untuk keamanan file spreadsheet.
+  - **Performa & Akses Server-Side**:
+    - Seluruh kalkulasi dan agregasi dijalankan di server dengan kueri Prisma teroptimasi tanpa isu $N+1$.
+    - Proteksi otorisasi sesi admin dan isolasi kepemilikan acara (`event.organizerId`).
+    - Pengujian otomatis `scripts/test-analytics.ts` lulus 100% pada seluruh 8 skenario pengujian.
+- **Perbaikan Input Focus pada CheckoutDrawer**:
+  - Dikonfirmasi dan diuji via headless Chrome: input nama dan nomor telepon di `CheckoutDrawer.tsx` menggunakan controlled state tanpa `autoFocus`, serta dilengkapi atribut `name` dan `autoComplete` standar (`name="buyerName"` `autoComplete="name"`, `name="buyerPhone"` `autoComplete="tel"`).
+  - Pengetikan nomor telepon (misal `082...`) mempertahankan fokus sepenuhnya pada kolom nomor WhatsApp tanpa terlempar kembali ke kolom nama.
 - **GateIn Smart Waiting List (Sistem Antrean Cerdas & Penawaran Tiket)**:
   - **Skema Database & Migrasi**:
     - Migrasi `20261106130000_add_smart_waiting_list` sukses menambahkan enum `WaitingListStatus` (`WAITING`, `OFFERED`, `CONVERTED`, `EXPIRED`, `CANCELLED`) dan tabel `WaitingListEntry` terhubung relasi dengan `Event` dan `Zone`.

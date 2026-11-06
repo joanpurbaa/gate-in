@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ExternalLink, LogOut, Plus } from "lucide-react";
+import { BarChart3, ExternalLink, LogOut, Plus } from "lucide-react";
 import { Logo } from "@/components/ui/Logo";
 
 interface AdminHeaderProps {
@@ -35,6 +35,13 @@ export function AdminHeader({ organizerName, organizerEmail }: AdminHeaderProps)
         </div>
 
         <nav className="flex items-center gap-2 text-xs font-semibold">
+          <Link
+            href="/admin/analytics"
+            className="inline-flex items-center gap-1.5 rounded-button border border-line bg-page px-3 py-1.5 text-ink transition hover:bg-gate/10 hover:text-gate"
+          >
+            <BarChart3 className="h-3.5 w-3.5 text-gate" />
+            <span>Analitik Penjualan</span>
+          </Link>
           <Link
             href="/admin/events/new"
             className="inline-flex items-center gap-1 rounded-button bg-gate px-3.5 py-1.5 text-white transition hover:bg-gate-strong"
