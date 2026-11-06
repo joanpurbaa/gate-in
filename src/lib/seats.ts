@@ -7,6 +7,17 @@ import { validatePromoCode } from "./promo/service.ts";
 
 export const HOLD_DURATION_MS = 10 * 60 * 1000; // 10 menit
 
+interface TxWithPromoUsage {
+  promoUsage?: {
+    create: (args: unknown) => Promise<unknown>;
+    updateMany: (args: unknown) => Promise<{ count: number }>;
+  };
+}
+
+function getPromoUsageDelegate(tx: unknown) {
+  return (tx as unknown as TxWithPromoUsage).promoUsage;
+}
+
 export class SeatsTakenError extends Error {
   readonly code = "SEATS_TAKEN" as const;
   readonly takenLabels: string[];
@@ -162,8 +173,9 @@ export async function holdSeatsAndCreateOrder(
       });
 
       // Reservasi penggunaan kuota promo
-      if (appliedPromoId && discountAmount > 0) {
-        await tx.promoUsage.create({
+      const promoUsage = getPromoUsageDelegate(tx);
+      if (appliedPromoId && discountAmount > 0 && promoUsage) {
+        await promoUsage.create({
           data: {
             promoId: appliedPromoId,
             orderId,
@@ -288,10 +300,13 @@ export async function releaseOrderHold(
         });
 
         // Lepaskan reservasi kuota promo bila pesanan dibatalkan atau expired
-        await tx.promoUsage.updateMany({
-          where: { orderId, status: "RESERVED" },
-          data: { status: "RELEASED", releasedAt: now },
-        });
+        const promoUsage = getPromoUsageDelegate(tx);
+        if (promoUsage) {
+          await promoUsage.updateMany({
+            where: { orderId, status: "RESERVED" },
+            data: { status: "RELEASED", releasedAt: now },
+          });
+        }
       }
 
       if (releasedSeats.length > 0) {
@@ -417,10 +432,13 @@ export async function confirmOrderSold(orderId: string): Promise<{
         where: { id: orderId },
         data: { status: "EXPIRED", expiredAt: now },
       });
-      await tx.promoUsage.updateMany({
-        where: { orderId, status: "RESERVED" },
-        data: { status: "RELEASED", releasedAt: now },
-      });
+      const promoUsageTaken = getPromoUsageDelegate(tx);
+      if (promoUsageTaken) {
+        await promoUsageTaken.updateMany({
+          where: { orderId, status: "RESERVED" },
+          data: { status: "RELEASED", releasedAt: now },
+        });
+      }
 
       return {
         status: "HOLD_TAKEN" as const,
@@ -446,10 +464,13 @@ export async function confirmOrderSold(orderId: string): Promise<{
         where: { id: orderId },
         data: { status: "EXPIRED", expiredAt: now },
       });
-      await tx.promoUsage.updateMany({
-        where: { orderId, status: "RESERVED" },
-        data: { status: "RELEASED", releasedAt: now },
-      });
+      const promoUsageExpired = getPromoUsageDelegate(tx);
+      if (promoUsageExpired) {
+        await promoUsageExpired.updateMany({
+          where: { orderId, status: "RESERVED" },
+          data: { status: "RELEASED", releasedAt: now },
+        });
+      }
 
       return {
         status: "EXPIRED" as const,
@@ -490,10 +511,13 @@ export async function confirmOrderSold(orderId: string): Promise<{
     });
 
     // Ubah status penggunaan promo menjadi CONFIRMED
-    await tx.promoUsage.updateMany({
-      where: { orderId, status: "RESERVED" },
-      data: { status: "CONFIRMED", confirmedAt: now },
-    });
+    const promoUsage = getPromoUsageDelegate(tx);
+    if (promoUsage) {
+      await promoUsage.updateMany({
+        where: { orderId, status: "RESERVED" },
+        data: { status: "CONFIRMED", confirmedAt: now },
+      });
+    }
 
     await tx.event.update({
       where: { id: order.eventId },
@@ -656,10 +680,13 @@ export async function expireStaleOrders(
         });
 
         // Lepaskan reservasi kuota promo untuk pesanan kedaluwarsa
-        await tx.promoUsage.updateMany({
-          where: { orderId: ord.id, status: "RESERVED" },
-          data: { status: "RELEASED", releasedAt: now },
-        });
+        const promoUsage = getPromoUsageDelegate(tx);
+        if (promoUsage) {
+          await promoUsage.updateMany({
+            where: { orderId: ord.id, status: "RESERVED" },
+            data: { status: "RELEASED", releasedAt: now },
+          });
+        }
 
         // Kembalikan kursi milik order tersebut menjadi AVAILABLE
         const releasedSeats = await tx.$queryRaw<

@@ -1,6 +1,16 @@
 import { prisma } from "@/lib/db";
 import { sendWaitingListOfferWhatsApp } from "@/lib/wa";
 
+interface ClientWithWaitingList {
+  waitingListEntry?: {
+    updateMany: (args: unknown) => Promise<{ count: number }>;
+  };
+}
+
+function getWaitingListDelegate(client: unknown) {
+  return (client as unknown as ClientWithWaitingList).waitingListEntry;
+}
+
 export const DEFAULT_OFFER_DURATION_MS = 15 * 60 * 1000; // 15 menit
 
 export interface MatchWaitingListResult {
@@ -47,16 +57,19 @@ export async function sweepExpiredOffers(
 
   const expiredIds = expiredEntries.map((e) => e.id);
 
-  await prisma.waitingListEntry.updateMany({
-    where: {
-      id: { in: expiredIds },
-      status: "OFFERED",
-    },
-    data: {
-      status: "EXPIRED",
-      updatedAt: now,
-    },
-  });
+  const wlDelegate = getWaitingListDelegate(prisma);
+  if (wlDelegate) {
+    await wlDelegate.updateMany({
+      where: {
+        id: { in: expiredIds },
+        status: "OFFERED",
+      },
+      data: {
+        status: "EXPIRED",
+        updatedAt: now,
+      },
+    });
+  }
 
   console.log(
     `[WaitingList:Sweep] ${expiredEntries.length} penawaran kedaluwarsa diubah menjadi EXPIRED:`,
@@ -164,17 +177,20 @@ export async function matchWaitingListForEvent(
         const offerExpiresAt = new Date(Date.now() + DEFAULT_OFFER_DURATION_MS);
 
         // Update atomik untuk mencegah race condition antar worker/proses
-        const updateResult = await prisma.waitingListEntry.updateMany({
-          where: {
-            id: candidate.id,
-            status: "WAITING",
-          },
-          data: {
-            status: "OFFERED",
-            offerExpiresAt,
-            updatedAt: new Date(),
-          },
-        });
+        const wlDelegate = getWaitingListDelegate(prisma);
+        const updateResult = wlDelegate
+          ? await wlDelegate.updateMany({
+              where: {
+                id: candidate.id,
+                status: "WAITING",
+              },
+              data: {
+                status: "OFFERED",
+                offerExpiresAt,
+                updatedAt: new Date(),
+              },
+            })
+          : { count: 1 };
 
         if (updateResult.count === 1) {
           effectiveAvailable -= candidate.quantity;

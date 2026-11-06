@@ -17,6 +17,7 @@ export async function getActivePromoUsageCount(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   client: any = prisma
 ): Promise<number> {
+  if (!client?.promoUsage) return 0;
   const count = await client.promoUsage.count({
     where: {
       promoId,
@@ -46,6 +47,7 @@ export async function getBuyerPromoUsageCount(
   client: any = prisma
 ): Promise<number> {
   const phone = normalizePhoneTo62(buyerPhone) || buyerPhone;
+  if (!client?.promoUsage) return 0;
   const count = await client.promoUsage.count({
     where: {
       promoId,

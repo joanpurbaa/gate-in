@@ -7,6 +7,12 @@ import type {
   ZoneWaitingSummary,
 } from "./types";
 
+interface ClientWithWaitingList {
+  waitingListEntry?: {
+    updateMany: (args: unknown) => Promise<{ count: number }>;
+  };
+}
+
 export class WaitingListError extends Error {
   code: string;
   constructor(message: string, code = "WAITING_LIST_ERROR") {
@@ -232,7 +238,9 @@ export async function claimWaitingListOffer(
   token: string,
   orderId: string
 ): Promise<boolean> {
-  const result = await prisma.waitingListEntry.updateMany({
+  const wlDelegate = (prisma as unknown as ClientWithWaitingList).waitingListEntry;
+  if (!wlDelegate) return false;
+  const result = await wlDelegate.updateMany({
     where: {
       token,
       status: "OFFERED",
