@@ -15,19 +15,13 @@ export default function NotFound() {
         <p className="mt-2 text-sm text-muted">
           Tautan yang kamu buka mungkin sudah berubah atau kode tiket tidak terdaftar di GateIn.
         </p>
-        <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-center">
+        <div className="mt-6 flex justify-center">
           <Link
             href="/"
-            className="inline-flex min-h-12 items-center justify-center gap-2 rounded-button bg-gate px-5 text-sm font-semibold text-white transition hover:bg-gate-strong sm:min-h-11"
+            className="inline-flex min-h-12 items-center justify-center gap-2 rounded-button bg-gate px-6 text-sm font-semibold text-white transition hover:bg-gate-strong sm:min-h-11"
           >
             <ArrowLeft className="h-4 w-4" />
-            Ke beranda acara
-          </Link>
-          <Link
-            href="/admin"
-            className="inline-flex min-h-12 items-center justify-center rounded-button border border-line bg-card px-5 text-sm font-medium text-ink transition hover:bg-page sm:min-h-11"
-          >
-            Untuk penyelenggara
+            <span>Kembali ke Beranda Acara</span>
           </Link>
         </div>
       </div>

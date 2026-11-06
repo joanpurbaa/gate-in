@@ -7,6 +7,7 @@ import {
 } from "@/lib/admin-event";
 import { prisma } from "@/lib/db";
 import { buildLayout, layoutToSeats } from "@/lib/layout/generate";
+import { revalidateEventsCache } from "@/lib/cache";
 
 export async function POST(req: NextRequest) {
   const session = await getAdminSession();
@@ -108,6 +109,8 @@ export async function POST(req: NextRequest) {
 
     return ev;
   });
+
+  await revalidateEventsCache();
 
   return NextResponse.json(
     {

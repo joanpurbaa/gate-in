@@ -34,6 +34,19 @@ Agent: centang `[x]` setelah tahap lulus `lint` + `build` + verifikasi di `docs/
 
 ## Keputusan
 
+- **Pembersihan Tautan Admin & Pengalaman Publik Siap Produksi**:
+  - Seluruh tombol dan tautan yang mengarah ke dashboard atau login admin (`/admin`, `/admin/login`) telah dihapus dari seluruh tampilan pengunjung (`PublicHeader.tsx`, `PublicFooter.tsx`, dan `not-found.tsx`).
+  - Header publik kini berfokus murni pada pengalaman pembeli dengan CTA "Jelajahi Acara" yang mengarah mulus ke `#daftar-acara`.
+  - Section banner diubah menjadi **Jaminan Keunggulan GateIn (`#keunggulan-gatein`)** berlatar Tinta yang mengedukasi 3 keunggulan utama: Denah Interaktif 1:1, Jaminan Bebas Kursi Ganda (Anti Double Booking), dan E-Ticket Resmi Instan via WhatsApp.
+- **Sistem Caching Native Next.js Tanpa Redis (`src/lib/cache.ts`)**:
+  - Menggunakan API bawaan `unstable_cache`, `revalidateTag`, dan `revalidatePath` dari Next.js 16:
+    - `getCachedMarketplaceData()`: Cache katalog acara publik dan agregasi kursi dengan TTL 60 detik (`tags: ['events', 'marketplace']`).
+    - `getCachedEventDetail(slug)`: Cache detail acara dan zona publik dengan TTL 30 detik (`tags: ['events']`).
+    - `revalidateEventsCache()`: Pemicu on-demand invalidation instan saat admin membuat (`POST /api/admin/events`) atau mengubah (`PUT /api/admin/events/[id]`) acara.
+  - Logika kritis penguncian kursi atomik (`src/lib/seats.ts`) dan polling ketersediaan kursi tetap membaca langsung ke PostgreSQL Neon agar data kursi selalu 100% segar dan bebas double-booking.
+- **Verifikasi Integritas Form Checkout & Keterbacaan Analitik**:
+  - Isu input fokus pada formulir pemesanan (`CheckoutDrawer.tsx`) terbukti tuntas; fokus tidak lagi terlempar ke kolom nama saat mengetik nomor WhatsApp.
+  - Kartu rekomendasi analitik organizer (`AnalyticsClient.tsx`) terkonfirmasi berkontras tinggi dan mudah dibaca pada seluruh kondisi tema.
 - **Eksekusi nonstop Tahap 1→9**: atas instruksi eksplisit user, seluruh tahap dikerjakan berurutan dengan commit lokal per tahap (`tahap-N: ...`).
 - **Prisma 7.10.1 stabil**: `npm install prisma` tanpa versi menarik `8.0.0-rc.30`; dikunci ke `7.10.1` agar selaras dengan `@prisma/client@7.10.1` dan `@prisma/adapter-neon@7.10.1`.
 - **Next.js 16 `cacheComponents`**: dimatikan di `next.config.ts` karena aplikasi ticketing membutuhkan pembacaan status kursi dan pesanan yang selalu segar per request.

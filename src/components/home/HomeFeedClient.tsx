@@ -152,7 +152,7 @@ export function HomeFeedClient({
         )}
       </div>
 
-      <main className="mx-auto w-full max-w-[1200px] px-4 py-4 sm:px-6 sm:py-8">
+      <main id="daftar-acara" className="scroll-mt-24 mx-auto w-full max-w-[1200px] px-4 py-4 sm:px-6 sm:py-8">
         {/* Tampilan Ketika Pencarian atau Filter Aktif */}
         {isSearchOrFiltered ? (
           <section className="space-y-6">

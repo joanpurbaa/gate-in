@@ -62,7 +62,7 @@ export function PublicHeader() {
             </div>
           </form>
 
-          {/* Kanan desktop: chip kota + tombol Untuk penyelenggara */}
+          {/* Kanan desktop: chip kota + tombol Jelajahi Acara */}
           <div className="hidden items-center gap-2.5 md:flex">
             <span className="inline-flex h-10 items-center gap-1.5 rounded-full border border-line bg-page px-3.5 text-xs font-medium text-ink">
               <MapPin className="h-3.5 w-3.5 text-gate" aria-hidden="true" />
@@ -70,10 +70,10 @@ export function PublicHeader() {
             </span>
 
             <Link
-              href="/admin"
-              className="inline-flex h-10 items-center rounded-button border border-line bg-card px-4 text-xs font-semibold text-ink transition hover:border-muted/50 hover:bg-page"
+              href="/#daftar-acara"
+              className="inline-flex h-10 items-center rounded-button bg-gate px-4 text-xs font-semibold text-white transition hover:bg-gate-strong shadow-xs"
             >
-              Untuk penyelenggara
+              Jelajahi Acara
             </Link>
           </div>
 
@@ -144,11 +144,11 @@ export function PublicHeader() {
             </span>
 
             <Link
-              href="/admin"
+              href="/#daftar-acara"
               onClick={() => setMobileSearchOpen(false)}
               className="font-semibold text-gate hover:underline"
             >
-              Untuk penyelenggara
+              Lihat Semua Acara
             </Link>
           </div>
         </div>

@@ -13,7 +13,7 @@ import {
 import { PosterImage } from "@/components/ui/PosterImage";
 import { StatusPill, computeSaleState } from "@/components/ui/StatusPill";
 import { EventDetailWaitingList } from "@/components/waiting-list/EventDetailWaitingList";
-import { prisma } from "@/lib/db";
+import { getCachedEventDetail } from "@/lib/cache";
 import { formatPriceRange, formatRupiah } from "@/lib/money";
 import { formatDateTime, formatShortDateTime, formatTimeRange } from "@/lib/time";
 
@@ -25,27 +25,16 @@ export default async function EventDetailPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const event = await prisma.event.findUnique({
-    where: { slug },
-    include: {
-      zones: { orderBy: { sortOrder: "asc" } },
-      seats: {
-        select: {
-          zoneId: true,
-          status: true,
-          heldUntil: true,
-        },
-      },
-    },
-  });
+  const event = await getCachedEventDetail(slug);
 
   if (!event || event.status !== "PUBLISHED") {
     notFound();
   }
 
   const now = new Date();
-  const isAvailable = (s: { status: string; heldUntil: Date | null }) =>
-    s.status === "AVAILABLE" || (s.status === "HELD" && (!s.heldUntil || s.heldUntil <= now));
+  const isAvailable = (s: { status: string; heldUntil: Date | string | null }) =>
+    s.status === "AVAILABLE" ||
+    (s.status === "HELD" && (!s.heldUntil || new Date(s.heldUntil) <= now));
 
   const availableSeats = event.seats.filter(isAvailable).length;
   const saleState = computeSaleState({

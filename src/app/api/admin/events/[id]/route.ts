@@ -3,6 +3,7 @@ import { getAdminSession, getOwnedEventOrNull } from "@/lib/auth";
 import { eventPayloadSchema, validateEventBusinessRules } from "@/lib/admin-event";
 import { prisma } from "@/lib/db";
 import { buildLayout, layoutToSeats } from "@/lib/layout/generate";
+import { revalidateEventsCache } from "@/lib/cache";
 
 export async function PUT(
   req: NextRequest,
@@ -163,6 +164,8 @@ export async function PUT(
       }
     }
   });
+
+  await revalidateEventsCache();
 
   return NextResponse.json({
     ok: true,
