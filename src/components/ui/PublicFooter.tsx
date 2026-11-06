@@ -26,9 +26,6 @@ export function PublicFooter() {
             <Link href="/" className="text-ink transition hover:text-gate">
               Daftar acara
             </Link>
-            <span className="text-muted text-xs">
-              E-ticket resmi via WhatsApp Fonnte
-            </span>
           </nav>
         </div>
 
