@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { PosterImage } from "@/components/ui/PosterImage";
 import { StatusPill, computeSaleState } from "@/components/ui/StatusPill";
+import { EventDetailWaitingList } from "@/components/waiting-list/EventDetailWaitingList";
 import { prisma } from "@/lib/db";
 import { formatPriceRange, formatRupiah } from "@/lib/money";
 import { formatDateTime, formatShortDateTime, formatTimeRange } from "@/lib/time";
@@ -181,6 +182,18 @@ export default async function EventDetailPage({
                 </div>
               ))}
             </div>
+
+            {/* Integrasi Smart Waiting List */}
+            <EventDetailWaitingList
+              event={{
+                id: event.id,
+                slug: event.slug,
+                name: event.name,
+                maxSeatsPerOrder: event.maxSeatsPerOrder,
+              }}
+              zones={zoneStats}
+              isSoldOut={saleState === "SOLD_OUT"}
+            />
           </div>
 
           {/* Catatan & Kontak */}

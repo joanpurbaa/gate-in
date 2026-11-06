@@ -40,6 +40,28 @@ Agent: centang `[x]` setelah tahap lulus `lint` + `build` + verifikasi di `docs/
 - **Schema `neon_auth` bawaan Neon**: dibiarkan tidak tersentuh; semua tabel aplikasi berada di schema `public`.
 - **Atomic Seat Locking (`src/lib/seats.ts`)**: menggunakan satu statement CTE `SELECT ... ORDER BY "id" FOR UPDATE` + `UPDATE "Seat"` untuk mencegah race condition sekaligus mencegah deadlock pada pemilihan multi-kursi. Diuji dengan 8 request paralel di `scripts/test-locking.ts`.
 - **AI Layout Fallback Kuota Free Tier (`src/lib/ai/layout.ts`)**: membaca `GEMINI_MODEL` dari env (`gemini-2.5-flash`) dan bila terkena limit RPM free tier (`429 RESOURCE_EXHAUSTED`), otomatis melakukan retry 1x ke `gemini-2.5-flash-lite` agar demo tidak gagal. Diuji pada 5 skenario di `scripts/test-ai-layout.ts`.
+- **GateIn Smart Waiting List (Sistem Antrean Cerdas & Penawaran Tiket)**:
+  - **Skema Database & Migrasi**:
+    - Migrasi `20261106130000_add_smart_waiting_list` sukses menambahkan enum `WaitingListStatus` (`WAITING`, `OFFERED`, `CONVERTED`, `EXPIRED`, `CANCELLED`) dan tabel `WaitingListEntry` terhubung relasi dengan `Event` dan `Zone`.
+    - Token unik 48 karakter heksadesimal kriptografis (`randomBytes(24).toString("hex")`) aman dan unguessable.
+    - Aturan integritas: pencegahan duplikasi entri aktif (`WAITING` atau `OFFERED`) untuk nomor WhatsApp pemesan yang sama pada acara dan zona yang sama.
+  - **Engine Matching & Urutan FIFO**:
+    - Modul `src/lib/waiting-list/matcher.ts` mengelola alokasi kuota secara berurutan berdasarkan waktu pendaftaran (FIFO `createdAt ASC`).
+    - Aturan Kuota Utuh: Pembeli yang meminta $Q$ kursi tidak akan diberi alokasi parsial (tetap berstatus `WAITING`) hingga kursi efektif pada zona tersebut $\ge Q$.
+    - Perhitungan kuota efektif memperhitungkan kursi yang sedang berstatus penawaran aktif (`OFFERED` dan belum kedaluwarsa) untuk mencegah satu kursi ditawarkan ke banyak orang sekaligus.
+    - Otomatisasi Pelepasan: `sweepExpiredOffers` memeriksa penawaran yang melewati `offerExpiresAt` (default 15 menit), mengubah status menjadi `EXPIRED`, dan secara otomatis meneruskan penawaran ke kandidat antrean berikutnya.
+    - Terintegrasi langsung dengan event pelepasan kursi di `src/lib/events/seat-events.ts` (`subscribeToSeatsReleased`) serta Vercel Cron `/api/cron/expire-orders`.
+  - **Alur Pembeli & Halaman Interaktif**:
+    - Modal pendaftaran `WaitingListModal.tsx` aktif di `/e/[slug]` saat tiket sold out atau saat zona pilihan habis terjual.
+    - Halaman pemantauan status `/waiting-list/[token]` menampilkan posisi antrean FIFO real-time (`#X di Zona Y`), detail permintaan, dan opsi pembatalan mandiri.
+    - Halaman penawaran khusus `/offer/[token]` dilengkapi timer hitung mundur 15 menit, rincian kuota eksklusif, serta tombol "Pilih Kursi & Pesan Sekarang".
+    - Halaman pemesanan `/e/[slug]/beli?offer=[token]` mengizinkan pemegang penawaran aktif mengakses denah dan memilih kursi bahkan saat penjualan umum telah sold out.
+    - Validasi token penawaran pada `POST /api/orders` menjamin konversi atomik (`CONVERTED`), mencocokkan zona dan jumlah tiket, serta mencegah penggunaan token ganda.
+  - **Dashboard Penyelenggara**:
+    - Tab baru "Smart Waiting List" pada monitor acara `/admin/events/[id]` menampilkan ringkasan 4 metrik status (Menunggu, Penawaran Aktif, Dikonversi, Kedaluwarsa/Batal), tabel ringkasan kebutuhan per zona, serta tabel antrean kandidat FIFO lengkap dengan status notifikasi dan tautan penawaran.
+  - **Notifikasi WhatsApp**:
+    - Fungsi `sendWaitingListOfferWhatsApp` di `src/lib/wa.ts` mengirim tautan penawaran instan ke WhatsApp pemesan secara non-blocking via Fonnte.
+  - **Pengujian**: Seluruh 10 skenario pengujian di `scripts/test-waiting-list.ts` lulus 100%, dan regresi `test-locking.ts`, `test-expired-recovery.ts` lulus 100%.
 - **GateIn Automatic Expired Order Recovery**:
   - **Skema & Migrasi**: Menambahkan `expiredAt` (DateTime), `expiredNotifiedAt` (DateTime), dan index `(status, holdExpiresAt)` pada tabel `Order` melalui migrasi `20261106120000_add_order_expiration_fields`.
   - **Expiration Engine (`src/lib/seats.ts`)**:

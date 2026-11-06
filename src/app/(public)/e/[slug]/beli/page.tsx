@@ -4,16 +4,21 @@ import { ArrowLeft } from "lucide-react";
 import { computeSaleState } from "@/components/ui/StatusPill";
 import { prisma } from "@/lib/db";
 import { parseLayout } from "@/lib/layout/validate";
+import { getWaitingListStatus } from "@/lib/waiting-list/service";
 import { BookingFlowClient } from "./BookingFlowClient";
 
 export const dynamic = "force-dynamic";
 
 export default async function EventBookingPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ offer?: string }>;
 }) {
   const { slug } = await params;
+  const { offer: offerToken } = await searchParams;
+
   const event = await prisma.event.findUnique({
     where: { slug },
     include: {
@@ -41,6 +46,36 @@ export default async function EventBookingPage({
   }
 
   const now = new Date();
+
+  // Validasi penawaran waiting list (jika pembeli datang via link penawaran)
+  let activeOffer: {
+    token: string;
+    zoneId: string;
+    zoneName: string;
+    quantity: number;
+    buyerName: string;
+    buyerPhone: string;
+  } | null = null;
+
+  if (typeof offerToken === "string" && offerToken.trim()) {
+    const offerData = await getWaitingListStatus(offerToken.trim());
+    if (
+      offerData &&
+      offerData.eventId === event.id &&
+      offerData.status === "OFFERED" &&
+      (!offerData.offerExpiresAt || new Date(offerData.offerExpiresAt) > now)
+    ) {
+      activeOffer = {
+        token: offerData.token,
+        zoneId: offerData.zoneId,
+        zoneName: offerData.zoneName,
+        quantity: offerData.quantity,
+        buyerName: offerData.buyerName,
+        buyerPhone: offerData.buyerPhone,
+      };
+    }
+  }
+
   const initialSeats = event.seats.map((s) => {
     const expired = s.status === "HELD" && (!s.heldUntil || s.heldUntil <= now);
     return {
@@ -64,7 +99,10 @@ export default async function EventBookingPage({
     now,
   });
 
-  if (saleState !== "OPEN") {
+  // Jika pembeli memiliki activeOffer valid, perbolehkan memilih kursi walau event umum sold out
+  const canAccess = saleState === "OPEN" || (activeOffer !== null && saleState === "SOLD_OUT");
+
+  if (!canAccess) {
     return (
       <main className="mx-auto max-w-xl px-4 py-12 text-center">
         <div className="rounded-card border border-line bg-card p-6">
@@ -102,11 +140,12 @@ export default async function EventBookingPage({
         startsAt: event.startsAt.toISOString(),
         gateOpenAt: event.gateOpenAt.toISOString(),
         gateCloseAt: event.gateCloseAt.toISOString(),
-        maxSeatsPerOrder: event.maxSeatsPerOrder,
+        maxSeatsPerOrder: activeOffer ? activeOffer.quantity : event.maxSeatsPerOrder,
       }}
       layout={layout}
       zones={event.zones}
       initialSeats={initialSeats}
+      offer={activeOffer ?? undefined}
     />
   );
 }

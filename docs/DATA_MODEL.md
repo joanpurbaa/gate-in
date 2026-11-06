@@ -44,6 +44,20 @@ Index: `(eventId, status)`, `(status, holdExpiresAt)`.
 `id`, `orderId`, `eventId`, `seatId` (**unik**), `code` (**unik**), `status` (`VALID` | `USED`),
 `checkedInAt?`, `checkedInBy?` (organizerId), `createdAt`.
 
+### WaitingListEntry
+`id` (cuid), `eventId`, `zoneId`, `buyerName`, `buyerPhone` (format 62xxx),
+`quantity` (Int, default 1), `status` (`WAITING` | `OFFERED` | `CONVERTED` | `EXPIRED` | `CANCELLED`),
+`token` (**unik**, unguessable hex), `offerExpiresAt?`, `offerNotifiedAt?`, `convertedOrderId?`,
+`createdAt`, `updatedAt`.
+Index: `(eventId, zoneId, status, createdAt)`, `(token)`, `(status, offerExpiresAt)`.
+
+Aturan Antrean & Penawaran:
+- Pendaftar unik: satu nomor WhatsApp hanya boleh memiliki 1 entri aktif (`WAITING` / `OFFERED`) per acara dan per zona.
+- Urutan FIFO (`createdAt ASC`) per acara dan per zona tiket.
+- Kuota permintaan utuh: calon pembeli yang meminta $Q$ tiket hanya akan ditawari jika jumlah kursi tersedia $\ge Q$.
+- Masa aktif penawaran: default 15 menit (`offerExpiresAt`). Jika tidak dikonversi sebelum batas waktu, status menjadi `EXPIRED` dan penawaran diteruskan otomatis ke kandidat antrean berikutnya.
+- Reservasi tetap menggunakan atomic locking melalui `holdSeatsAndCreateOrder`. Token penawaran berubah menjadi `CONVERTED` saat pemesanan berhasil dibuat.
+
 ## 2. Status Kursi
 
 Status yang tersimpan: `AVAILABLE`, `HELD`, `SOLD`.

@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { expireStaleOrders } from "@/lib/seats";
+import { sweepExpiredOffers } from "@/lib/waiting-list/matcher";
 
 export const dynamic = "force-dynamic";
 
@@ -14,6 +15,8 @@ async function handleExpireCron(req: NextRequest) {
   }
 
   try {
+    const expiredOffersResult = await sweepExpiredOffers();
+
     const result = await expireStaleOrders({
       notifyBuyers: true,
       requestOrigin: req.nextUrl.origin,
@@ -22,6 +25,7 @@ async function handleExpireCron(req: NextRequest) {
     return NextResponse.json({
       ok: true,
       ...result,
+      expiredOffers: expiredOffersResult,
       timestamp: new Date().toISOString(),
     });
   } catch (err) {

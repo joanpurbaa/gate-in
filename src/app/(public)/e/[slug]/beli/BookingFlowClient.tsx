@@ -38,6 +38,14 @@ interface BookingFlowClientProps {
   layout: LayoutV1;
   zones: SeatZoneInfo[];
   initialSeats: SeatMapItem[];
+  offer?: {
+    token: string;
+    zoneId: string;
+    zoneName: string;
+    quantity: number;
+    buyerName: string;
+    buyerPhone: string;
+  };
 }
 
 export function BookingFlowClient({
@@ -45,12 +53,13 @@ export function BookingFlowClient({
   layout,
   zones,
   initialSeats,
+  offer,
 }: BookingFlowClientProps) {
   const router = useRouter();
 
   // State data pemesan (tersimpan saat beralih antara denah dan drawer)
-  const [buyerName, setBuyerName] = useState("");
-  const [buyerPhoneRaw, setBuyerPhoneRaw] = useState("");
+  const [buyerName, setBuyerName] = useState(offer?.buyerName || "");
+  const [buyerPhoneRaw, setBuyerPhoneRaw] = useState(offer?.buyerPhone || "");
   const [formError, setFormError] = useState<string | null>(null);
 
   // State pemilihan kursi
@@ -188,6 +197,7 @@ export function BookingFlowClient({
           buyerName: trimmedName,
           buyerPhone: phone62,
           seatLabels: selectedLabels,
+          offerToken: offer?.token,
         }),
       });
 
@@ -269,6 +279,23 @@ export function BookingFlowClient({
           </div>
         </div>
       </div>
+
+      {/* Banner Penawaran Waiting List Aktif */}
+      {offer && (
+        <div className="mb-4 flex items-center justify-between rounded-xl border border-emerald-500/30 bg-emerald-50/80 p-3.5 text-xs text-emerald-950 dark:bg-emerald-950/20 dark:text-emerald-200">
+          <div className="flex items-center gap-2.5">
+            <span className="flex h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse" />
+            <div>
+              <span className="font-bold">Penawaran Waiting List Aktif:</span> Anda
+              mendapatkan alokasi <strong>{offer.quantity} kursi</strong> pada zona{" "}
+              <strong>{offer.zoneName}</strong>.
+            </div>
+          </div>
+          <span className="rounded-lg bg-emerald-600 px-2.5 py-1 text-[11px] font-bold text-white">
+            Eksklusif
+          </span>
+        </div>
+      )}
 
       {/* Alert / Toast Kursi Bentrok atau Batas Kursi */}
       {toast && (

@@ -39,6 +39,14 @@ enum WaStatus {
   SKIPPED
 }
 
+enum WaitingListStatus {
+  WAITING
+  OFFERED
+  CONVERTED
+  EXPIRED
+  CANCELLED
+}
+
 enum EventCategory {
   MUSIC
   TECH
@@ -85,10 +93,11 @@ model Event {
   createdAt        DateTime      @default(now())
   updatedAt        DateTime      @updatedAt
 
-  zones   Zone[]
-  seats   Seat[]
-  orders  Order[]
-  tickets Ticket[]
+  zones       Zone[]
+  seats       Seat[]
+  orders      Order[]
+  tickets     Ticket[]
+  waitingList WaitingListEntry[]
 
   @@index([organizerId])
   @@index([status])
@@ -104,7 +113,8 @@ model Zone {
   color     String
   price     Int
   sortOrder Int    @default(0)
-  seats     Seat[]
+  seats       Seat[]
+  waitingList WaitingListEntry[]
 
   @@index([eventId])
 }
@@ -175,3 +185,26 @@ model Ticket {
 
   @@index([eventId, status])
 }
+
+model WaitingListEntry {
+  id               String            @id @default(cuid())
+  eventId          String
+  event            Event             @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  zoneId           String
+  zone             Zone              @relation(fields: [zoneId], references: [id], onDelete: Cascade)
+  buyerName        String
+  buyerPhone       String
+  quantity         Int               @default(1)
+  status           WaitingListStatus @default(WAITING)
+  token            String            @unique
+  offerExpiresAt   DateTime?
+  offerNotifiedAt  DateTime?
+  convertedOrderId String?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  @@index([eventId, zoneId, status, createdAt])
+  @@index([token])
+  @@index([status, offerExpiresAt])
+}
+

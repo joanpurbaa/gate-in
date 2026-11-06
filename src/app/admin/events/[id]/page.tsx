@@ -3,6 +3,7 @@ import { AdminHeader } from "@/components/admin/AdminHeader";
 import { requireAdminPageSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { parseLayout } from "@/lib/layout/validate";
+import { getEventWaitingListDashboard } from "@/lib/waiting-list/service";
 import { EventMonitorClient } from "./EventMonitorClient";
 
 export const dynamic = "force-dynamic";
@@ -87,6 +88,7 @@ export default async function AdminEventDetailPage({
     .reduce((sum, o) => sum + o.totalAmount, 0);
 
   const parsedLayout = event.layout ? parseLayout(event.layout) : null;
+  const waitingList = await getEventWaitingListDashboard(event.id);
 
   return (
     <div className="min-h-screen bg-page">
@@ -140,6 +142,7 @@ export default async function AdminEventDetailPage({
           createdAt: o.createdAt.toISOString(),
           paidAt: o.paidAt?.toISOString() ?? null,
         }))}
+        initialWaitingList={waitingList}
       />
     </div>
   );

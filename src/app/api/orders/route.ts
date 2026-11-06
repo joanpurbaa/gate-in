@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { normalizePhoneTo62 } from "@/lib/phone";
 import { holdSeatsAndCreateOrder, SeatsTakenError } from "@/lib/seats";
+import { claimWaitingListOffer } from "@/lib/waiting-list/service";
 
 const createOrderSchema = z.object({
   eventId: z.string().min(1, "ID event wajib diisi"),
@@ -12,6 +13,7 @@ const createOrderSchema = z.object({
     .array(z.string().trim().min(1).max(20))
     .min(1, "Pilih minimal 1 kursi")
     .max(10, "Terlalu banyak kursi dipilih"),
+  offerToken: z.string().trim().min(10).optional(),
 });
 
 export async function POST(req: NextRequest) {
@@ -30,7 +32,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const { eventId, buyerName, buyerPhone, seatLabels } = parsed.data;
+  const { eventId, buyerName, buyerPhone, seatLabels, offerToken } = parsed.data;
   const phone62 = normalizePhoneTo62(buyerPhone);
   if (!phone62) {
     return NextResponse.json(
@@ -70,6 +72,64 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  if (offerToken) {
+    const entry = await prisma.waitingListEntry.findUnique({
+      where: { token: offerToken },
+      include: { zone: true },
+    });
+
+    if (!entry || entry.eventId !== event.id) {
+      return NextResponse.json(
+        { error: "Token penawaran waiting list tidak valid untuk acara ini" },
+        { status: 400 }
+      );
+    }
+
+    if (entry.status === "CONVERTED") {
+      return NextResponse.json(
+        { error: "Tautan penawaran ini sudah pernah digunakan untuk pemesanan tiket." },
+        { status: 400 }
+      );
+    }
+
+    if (entry.status !== "OFFERED") {
+      return NextResponse.json(
+        { error: "Status penawaran tiket tidak aktif." },
+        { status: 400 }
+      );
+    }
+
+    if (entry.offerExpiresAt && entry.offerExpiresAt <= now) {
+      return NextResponse.json(
+        { error: "Masa berlaku penawaran tiket telah berakhir (kedaluwarsa)." },
+        { status: 400 }
+      );
+    }
+
+    if (uniqueLabels.length !== entry.quantity) {
+      return NextResponse.json(
+        {
+          error: `Jumlah kursi yang Anda pilih (${uniqueLabels.length}) harus sama dengan kuota penawaran Anda (${entry.quantity} kursi).`,
+        },
+        { status: 400 }
+      );
+    }
+
+    const selectedSeats = await prisma.seat.findMany({
+      where: { eventId: event.id, label: { in: uniqueLabels } },
+      select: { zoneId: true, label: true },
+    });
+    const invalidZoneSeats = selectedSeats.filter((s) => s.zoneId !== entry.zoneId);
+    if (invalidZoneSeats.length > 0) {
+      return NextResponse.json(
+        {
+          error: `Kursi yang dipilih harus berada pada zona ${entry.zone.name}.`,
+        },
+        { status: 400 }
+      );
+    }
+  }
+
   try {
     const held = await holdSeatsAndCreateOrder({
       eventId: event.id,
@@ -77,6 +137,10 @@ export async function POST(req: NextRequest) {
       buyerName,
       buyerPhone: phone62,
     });
+
+    if (offerToken) {
+      await claimWaitingListOffer(offerToken, held.orderId).catch(console.error);
+    }
 
     return NextResponse.json(
       {

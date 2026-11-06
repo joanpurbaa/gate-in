@@ -232,3 +232,106 @@ export async function sendOrderExpiredWhatsApp(
     clearTimeout(timer);
   }
 }
+
+/**
+ * Kirim notifikasi penawaran tiket tersedia ke WhatsApp pembeli waiting list.
+ * ATURAN KERAS: Pengiriman WhatsApp bersifat non-blocking dan tidak boleh menggagalkan proses penawaran.
+ */
+export async function sendWaitingListOfferWhatsApp(
+  entryId: string,
+  requestOrigin?: string
+): Promise<{ status: "SENT" | "FAILED" | "SKIPPED"; error?: string }> {
+  const token = process.env.FONNTE_TOKEN?.trim();
+  const entry = await prisma.waitingListEntry.findUnique({
+    where: { id: entryId },
+    include: {
+      event: true,
+      zone: true,
+    },
+  });
+
+  if (!entry) {
+    return { status: "FAILED", error: "Entri waiting list tidak ditemukan" };
+  }
+
+  // Cegah notifikasi berulang untuk penawaran yang sama
+  if (entry.offerNotifiedAt) {
+    return { status: "SKIPPED", error: "Notifikasi penawaran sudah pernah dikirim" };
+  }
+
+  if (!entry.offerExpiresAt) {
+    return { status: "FAILED", error: "Batas waktu penawaran belum ditentukan" };
+  }
+
+  if (!token) {
+    await prisma.waitingListEntry.update({
+      where: { id: entryId },
+      data: { offerNotifiedAt: new Date() },
+    });
+    return { status: "SKIPPED" };
+  }
+
+  const baseUrl = resolveAppBaseUrl(requestOrigin);
+  const message = [
+    `*TIKET TERSEDIA! — GATEIN WAITING LIST*`,
+    `Halo *${entry.buyerName}*, kursi untuk acara *${entry.event.name}* kini tersedia!`,
+    ``,
+    `📍 *Lokasi:* ${entry.event.venueName}`,
+    `🎫 *Zona:* ${entry.zone.name}`,
+    `🎟 *Jumlah Tiket:* ${entry.quantity} kursi`,
+    `⏳ *Batas Waktu Klaim:* Berakhir pukul ${formatDateTime(entry.offerExpiresAt)} (WIB)`,
+    ``,
+    `Buka tautan di bawah ini untuk memilih kursi dan menyelesaikan reservasi:`,
+    `${baseUrl}/offer/${entry.token}`,
+    ``,
+    `_Catatan: Segera konfirmasi pemesanan Anda. Jika batas waktu habis, penawaran akan otomatis dialihkan ke kandidat antrean berikutnya._`,
+  ].join("\n");
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 7000);
+
+  try {
+    const form = new URLSearchParams();
+    form.set("target", entry.buyerPhone);
+    form.set("message", message);
+
+    const res = await fetch("https://api.fonnte.com/send", {
+      method: "POST",
+      headers: {
+        Authorization: token,
+      },
+      body: form,
+      signal: controller.signal,
+    });
+
+    const data = (await res.json().catch(() => ({}))) as {
+      status?: boolean;
+      reason?: string;
+      detail?: string;
+    };
+
+    const isSuccess = res.ok && data.status !== false;
+
+    await prisma.waitingListEntry.update({
+      where: { id: entryId },
+      data: {
+        offerNotifiedAt: new Date(),
+      },
+    });
+
+    return isSuccess
+      ? { status: "SENT" }
+      : { status: "FAILED", error: String(data.reason || data.detail) };
+  } catch (err) {
+    const errMsg = err instanceof Error ? err.message : "Gagal menghubungi API Fonnte";
+    await prisma.waitingListEntry.update({
+      where: { id: entryId },
+      data: {
+        offerNotifiedAt: new Date(),
+      },
+    });
+    return { status: "FAILED", error: errMsg };
+  } finally {
+    clearTimeout(timer);
+  }
+}

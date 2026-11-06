@@ -54,3 +54,13 @@ export async function dispatchSeatsReleased(event: SeatsReleasedEvent): Promise<
     }
   }
 }
+
+// Auto-subscribe Smart Waiting List matcher agar segera dieksekusi saat ada kursi dilepas
+subscribeToSeatsReleased(async (event) => {
+  try {
+    const { matchWaitingListForEvent } = await import("../waiting-list/matcher.ts");
+    await matchWaitingListForEvent(event.eventId);
+  } catch (err) {
+    console.error("[SeatEvent:WaitingListHook] Gagal mencocokkan waiting list:", err);
+  }
+});

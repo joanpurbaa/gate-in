@@ -20,6 +20,43 @@ import type { LayoutV1 } from "@/lib/layout/types";
 import { formatRupiah } from "@/lib/money";
 import { formatDateTime, formatShortDateTime } from "@/lib/time";
 
+export interface WaitingListDashboardData {
+  stats: {
+    totalEntries: number;
+    totalWaiting: number;
+    totalOffered: number;
+    totalConverted: number;
+    totalExpired: number;
+    totalCancelled: number;
+  };
+  zones: {
+    zoneId: string;
+    zoneName: string;
+    zoneColor: string;
+    zonePrice: number;
+    availableSeats: number;
+    activeOfferedSeats: number;
+    waitingCount: number;
+    waitingRequestedSeats: number;
+  }[];
+  entries: {
+    id: string;
+    queueNumber: number;
+    buyerName: string;
+    buyerPhone: string;
+    zoneId: string;
+    zoneName: string;
+    zoneColor: string;
+    quantity: number;
+    status: "WAITING" | "OFFERED" | "CONVERTED" | "EXPIRED" | "CANCELLED";
+    token: string;
+    offerExpiresAt: string | null;
+    offerNotifiedAt: string | null;
+    convertedOrderId: string | null;
+    createdAt: string;
+  }[];
+}
+
 interface ParticipantRow {
   code: string;
   seatLabel: string;
@@ -68,6 +105,7 @@ interface EventMonitorClientProps {
   initialSeats: SeatMapItem[];
   participants: ParticipantRow[];
   orders: OrderRow[];
+  initialWaitingList?: WaitingListDashboardData;
 }
 
 export function EventMonitorClient({
@@ -78,22 +116,51 @@ export function EventMonitorClient({
   initialSeats,
   participants,
   orders,
+  initialWaitingList,
 }: EventMonitorClientProps) {
   const [stats, setStats] = useState(initialStats);
   const [seats, setSeats] = useState<SeatMapItem[]>(initialSeats);
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
 
-  const [activeTab, setActiveTab] = useState<"peserta" | "transaksi">("peserta");
+  const [activeTab, setActiveTab] = useState<"peserta" | "transaksi" | "waiting-list">("peserta");
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
+  const [waitingList, setWaitingList] = useState<WaitingListDashboardData>(
+    initialWaitingList ?? {
+      stats: {
+        totalEntries: 0,
+        totalWaiting: 0,
+        totalOffered: 0,
+        totalConverted: 0,
+        totalExpired: 0,
+        totalCancelled: 0,
+      },
+      zones: [],
+      entries: [],
+    }
+  );
 
   const pollLive = useCallback(async () => {
     try {
       const res = await fetch(`/api/admin/events/${event.id}/live`, { cache: "no-store" });
-      if (!res.ok) return;
-      const data = await res.json();
-      if (data.stats) setStats(data.stats);
-      if (Array.isArray(data.seats)) setSeats(data.seats);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.stats) setStats(data.stats);
+        if (Array.isArray(data.seats)) setSeats(data.seats);
+      }
+
+      const wlRes = await fetch(`/api/admin/events/${event.id}/waiting-list`, { cache: "no-store" });
+      if (wlRes.ok) {
+        const wlData = await wlRes.json();
+        if (wlData.stats) {
+          setWaitingList({
+            stats: wlData.stats,
+            zones: wlData.zones ?? [],
+            entries: wlData.entries ?? [],
+          });
+        }
+      }
+
       setLastUpdated(new Date());
     } catch {
       // Abaikan gangguan sesaat
@@ -132,6 +199,19 @@ export function EventMonitorClient({
       );
     });
   }, [orders, searchQuery, statusFilter]);
+
+  const filteredWaitingEntries = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    return (waitingList?.entries ?? []).filter((w) => {
+      if (statusFilter !== "ALL" && w.status !== statusFilter) return false;
+      if (!q) return true;
+      return (
+        w.buyerName.toLowerCase().includes(q) ||
+        w.buyerPhone.toLowerCase().includes(q) ||
+        w.zoneName.toLowerCase().includes(q)
+      );
+    });
+  }, [waitingList, searchQuery, statusFilter]);
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-6 sm:py-8">
@@ -290,6 +370,20 @@ export function EventMonitorClient({
             >
               Daftar Transaksi ({orders.length})
             </button>
+            <button
+              type="button"
+              onClick={() => {
+                setActiveTab("waiting-list");
+                setStatusFilter("ALL");
+              }}
+              className={`rounded-xl px-4 py-2 text-xs font-semibold ${
+                activeTab === "waiting-list"
+                  ? "bg-gate text-white"
+                  : "border border-line bg-page text-ink"
+              }`}
+            >
+              Smart Waiting List ({waitingList.entries.length})
+            </button>
           </div>
 
           <div className="flex flex-wrap gap-2">
@@ -334,12 +428,20 @@ export function EventMonitorClient({
                 <option value="USED">Sudah Check-in (Hadir)</option>
                 <option value="VALID">Belum Check-in (Valid)</option>
               </>
-            ) : (
+            ) : activeTab === "transaksi" ? (
               <>
                 <option value="PAID">Lunas (PAID)</option>
                 <option value="PENDING">Ditahan (PENDING)</option>
                 <option value="FAILED">Gagal (FAILED)</option>
                 <option value="EXPIRED">Kedaluwarsa (EXPIRED)</option>
+              </>
+            ) : (
+              <>
+                <option value="WAITING">Menunggu (WAITING)</option>
+                <option value="OFFERED">Ditawarkan (OFFERED)</option>
+                <option value="CONVERTED">Dikonversi (CONVERTED)</option>
+                <option value="EXPIRED">Kedaluwarsa (EXPIRED)</option>
+                <option value="CANCELLED">Dibatalkan (CANCELLED)</option>
               </>
             )}
           </select>
@@ -403,7 +505,7 @@ export function EventMonitorClient({
               </tbody>
             </table>
           </div>
-        ) : (
+        ) : activeTab === "transaksi" ? (
           <div className="mt-4 overflow-x-auto">
             <table className="w-full min-w-[720px] border-collapse text-left text-xs">
               <thead>
@@ -469,6 +571,199 @@ export function EventMonitorClient({
                 )}
               </tbody>
             </table>
+          </div>
+        ) : (
+          /* Tab Smart Waiting List */
+          <div className="mt-4 space-y-6">
+            {/* 4 Kartu Statistik Waiting List */}
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              <div className="rounded-xl border border-line bg-page p-3.5">
+                <div className="text-[11px] font-semibold text-muted">Menunggu (FIFO)</div>
+                <div className="mt-1 font-display text-2xl font-extrabold text-amber-600 dark:text-amber-400">
+                  {waitingList.stats.totalWaiting}
+                </div>
+              </div>
+              <div className="rounded-xl border border-line bg-page p-3.5">
+                <div className="text-[11px] font-semibold text-muted">Penawaran Aktif</div>
+                <div className="mt-1 font-display text-2xl font-extrabold text-emerald-600 dark:text-emerald-400">
+                  {waitingList.stats.totalOffered}
+                </div>
+              </div>
+              <div className="rounded-xl border border-line bg-page p-3.5">
+                <div className="text-[11px] font-semibold text-muted">Dikonversi (Dipesan)</div>
+                <div className="mt-1 font-display text-2xl font-extrabold text-gate">
+                  {waitingList.stats.totalConverted}
+                </div>
+              </div>
+              <div className="rounded-xl border border-line bg-page p-3.5">
+                <div className="text-[11px] font-semibold text-muted">Kedaluwarsa / Batal</div>
+                <div className="mt-1 font-display text-2xl font-extrabold text-muted">
+                  {waitingList.stats.totalExpired + waitingList.stats.totalCancelled}
+                </div>
+              </div>
+            </div>
+
+            {/* Ringkasan Antrean per Zona */}
+            <div>
+              <h4 className="text-xs font-bold uppercase tracking-wider text-muted">
+                Ringkasan Antrean per Zona
+              </h4>
+              <div className="mt-2 overflow-x-auto rounded-xl border border-line">
+                <table className="w-full min-w-[580px] border-collapse text-left text-xs">
+                  <thead>
+                    <tr className="border-b border-line bg-page text-muted">
+                      <th className="px-3 py-2 font-semibold">Kategori Zona</th>
+                      <th className="px-3 py-2 font-semibold">Harga</th>
+                      <th className="px-3 py-2 font-semibold">Kursi Tersedia</th>
+                      <th className="px-3 py-2 font-semibold">Sedang Ditawarkan</th>
+                      <th className="px-3 py-2 font-semibold">Pendaftar Menunggu</th>
+                      <th className="px-3 py-2 font-semibold">Total Tiket Diminta</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-line">
+                    {waitingList.zones.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="px-3 py-4 text-center text-muted">
+                          Belum ada data zona tiket.
+                        </td>
+                      </tr>
+                    ) : (
+                      waitingList.zones.map((z) => (
+                        <tr key={z.zoneId} className="hover:bg-page">
+                          <td className="px-3 py-2 font-bold text-ink">
+                            <span className="inline-flex items-center gap-2">
+                              <span
+                                className="h-2.5 w-2.5 rounded-full"
+                                style={{ backgroundColor: z.zoneColor }}
+                              />
+                              {z.zoneName}
+                            </span>
+                          </td>
+                          <td className="px-3 py-2 text-muted">{formatRupiah(z.zonePrice)}</td>
+                          <td className="px-3 py-2 font-semibold text-ink">{z.availableSeats}</td>
+                          <td className="px-3 py-2 text-muted">{z.activeOfferedSeats}</td>
+                          <td className="px-3 py-2 font-bold text-amber-600 dark:text-amber-400">
+                            {z.waitingCount} orang
+                          </td>
+                          <td className="px-3 py-2 font-bold text-gate">
+                            {z.waitingRequestedSeats} tiket
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Tabel Antrean Kandidat FIFO */}
+            <div>
+              <h4 className="text-xs font-bold uppercase tracking-wider text-muted">
+                Daftar Kandidat Waiting List ({filteredWaitingEntries.length})
+              </h4>
+              <div className="mt-2 overflow-x-auto rounded-xl border border-line">
+                <table className="w-full min-w-[760px] border-collapse text-left text-xs">
+                  <thead>
+                    <tr className="border-b border-line bg-page text-muted">
+                      <th className="px-3 py-2.5 font-semibold">No (FIFO)</th>
+                      <th className="px-3 py-2.5 font-semibold">Calon Pembeli</th>
+                      <th className="px-3 py-2.5 font-semibold">Zona & Kuota</th>
+                      <th className="px-3 py-2.5 font-semibold">Status Antrean</th>
+                      <th className="px-3 py-2.5 font-semibold">Waktu Daftar</th>
+                      <th className="px-3 py-2.5 font-semibold">Status Penawaran</th>
+                      <th className="px-3 py-2.5 font-semibold">Tautan</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-line">
+                    {filteredWaitingEntries.length === 0 ? (
+                      <tr>
+                        <td colSpan={7} className="px-3 py-8 text-center text-muted">
+                          Tidak ada kandidat waiting list yang cocok dengan filter.
+                        </td>
+                      </tr>
+                    ) : (
+                      filteredWaitingEntries.map((w, idx) => (
+                        <tr key={w.id} className="hover:bg-page">
+                          <td className="px-3 py-2.5 font-mono font-bold text-gate">
+                            #{w.queueNumber ?? idx + 1}
+                          </td>
+                          <td className="px-3 py-2.5">
+                            <div className="font-semibold text-ink">{w.buyerName}</div>
+                            <div className="font-mono text-[11px] text-muted">{w.buyerPhone}</div>
+                          </td>
+                          <td className="px-3 py-2.5">
+                            <span className="inline-flex items-center gap-1.5 font-medium text-ink">
+                              <span
+                                className="h-2 w-2 rounded-full"
+                                style={{ backgroundColor: w.zoneColor }}
+                              />
+                              {w.zoneName}
+                            </span>
+                            <div className="font-bold text-gate">{w.quantity} tiket</div>
+                          </td>
+                          <td className="px-3 py-2.5">
+                            <span
+                              className={`inline-flex rounded-full border px-2.5 py-0.5 text-[11px] font-bold ${
+                                w.status === "WAITING"
+                                  ? "border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-400"
+                                  : w.status === "OFFERED"
+                                    ? "border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900/50 dark:bg-emerald-950/30 dark:text-emerald-400"
+                                    : w.status === "CONVERTED"
+                                      ? "border-blue-200 bg-blue-50 text-blue-800 dark:border-blue-900/50 dark:bg-blue-950/30 dark:text-blue-400"
+                                      : "border-line bg-page text-muted"
+                              }`}
+                            >
+                              {w.status}
+                            </span>
+                          </td>
+                          <td className="px-3 py-2.5 text-muted">
+                            {formatShortDateTime(w.createdAt)}
+                          </td>
+                          <td className="px-3 py-2.5 text-[11px]">
+                            {w.status === "OFFERED" && w.offerExpiresAt ? (
+                              <span className="font-semibold text-emerald-700 dark:text-emerald-400">
+                                Berakhir {formatShortDateTime(w.offerExpiresAt)}
+                              </span>
+                            ) : w.status === "CONVERTED" && w.convertedOrderId ? (
+                              <Link
+                                href={`/pesanan/${w.convertedOrderId}`}
+                                className="font-mono text-gate hover:underline"
+                              >
+                                {w.convertedOrderId}
+                              </Link>
+                            ) : (
+                              <span className="text-muted">-</span>
+                            )}
+                          </td>
+                          <td className="px-3 py-2.5">
+                            <div className="flex items-center gap-2">
+                              <Link
+                                href={`/waiting-list/${w.token}`}
+                                target="_blank"
+                                className="inline-flex items-center gap-1 text-[11px] font-semibold text-gate hover:underline"
+                              >
+                                <span>Status</span>
+                                <ExternalLink className="h-3 w-3" />
+                              </Link>
+                              {w.status === "OFFERED" && (
+                                <Link
+                                  href={`/offer/${w.token}`}
+                                  target="_blank"
+                                  className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 hover:underline"
+                                >
+                                  <span>Offer</span>
+                                  <ExternalLink className="h-3 w-3" />
+                                </Link>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         )}
       </section>
