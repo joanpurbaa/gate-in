@@ -258,20 +258,20 @@ export function CheckinScannerClient({
       )}
 
       {/* Header Check-in */}
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-stone-200 bg-white p-4 shadow-xs">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-line bg-white p-4 shadow-xs">
         <div>
           <Link
             href={`/admin/events/${event.id}`}
-            className="inline-flex items-center gap-1 text-xs font-semibold text-stone-600 hover:text-stone-900"
+            className="inline-flex items-center gap-1 text-xs font-semibold text-muted hover:text-ink"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
             <span>Kembali ke Detail Acara</span>
           </Link>
-          <h1 className="mt-1 text-lg font-bold text-stone-900 sm:text-xl">
+          <h1 className="mt-1 text-lg font-bold text-ink sm:text-xl">
             Check-in QR Peserta: {event.name}
           </h1>
-          <div className="mt-0.5 flex items-center gap-1.5 text-xs text-stone-600">
-            <Clock className="h-3.5 w-3.5 text-[#3730A3]" />
+          <div className="mt-0.5 flex items-center gap-1.5 text-xs text-muted">
+            <Clock className="h-3.5 w-3.5 text-gate" />
             <span>Open Gate: {formatTimeRange(event.gateOpenAt, event.gateCloseAt)}</span>
           </div>
         </div>
@@ -287,10 +287,10 @@ export function CheckinScannerClient({
       {/* Scanner Kamera + Input Manual */}
       <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2">
         {/* Kamera QR */}
-        <div className="rounded-2xl border border-stone-200 bg-white p-4 shadow-xs">
+        <div className="rounded-2xl border border-line bg-white p-4 shadow-xs">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-xs font-bold text-stone-900">
-              <Camera className="h-4 w-4 text-[#3730A3]" />
+            <div className="flex items-center gap-2 text-xs font-bold text-ink">
+              <Camera className="h-4 w-4 text-gate" />
               <span>Scanner Kamera QR</span>
             </div>
             {cameraActive ? (
@@ -306,7 +306,7 @@ export function CheckinScannerClient({
               <button
                 type="button"
                 onClick={startCamera}
-                className="inline-flex items-center gap-1 rounded-lg bg-[#3730A3] px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-900"
+                className="inline-flex items-center gap-1 rounded-lg bg-gate px-3 py-1.5 text-xs font-semibold text-white hover:bg-gate-strong"
               >
                 <Camera className="h-3.5 w-3.5" />
                 <span>Aktifkan Kamera</span>
@@ -316,7 +316,7 @@ export function CheckinScannerClient({
 
           <div
             id="gatein-qr-reader"
-            className="mt-3 flex min-h-[220px] items-center justify-center overflow-hidden rounded-xl border border-dashed border-stone-300 bg-stone-950 text-center text-xs text-stone-400"
+            className="mt-3 flex min-h-[220px] items-center justify-center overflow-hidden rounded-xl border border-dashed border-line bg-ink text-center text-xs text-muted"
           >
             {!cameraActive && (
               <span className="px-4">
@@ -334,13 +334,13 @@ export function CheckinScannerClient({
         </div>
 
         {/* Input Manual & Tombol Uji Cepat Demo */}
-        <div className="flex flex-col justify-between rounded-2xl border border-stone-200 bg-white p-4 shadow-xs">
+        <div className="flex flex-col justify-between rounded-2xl border border-line bg-white p-4 shadow-xs">
           <div>
-            <div className="flex items-center gap-2 text-xs font-bold text-stone-900">
-              <Keyboard className="h-4 w-4 text-[#3730A3]" />
+            <div className="flex items-center gap-2 text-xs font-bold text-ink">
+              <Keyboard className="h-4 w-4 text-gate" />
               <span>Input Kode Tiket Manual (Cadangan)</span>
             </div>
-            <p className="mt-1 text-xs text-stone-600">
+            <p className="mt-1 text-xs text-muted">
               Ketik 10 karakter kode tiket jika kamera tidak digunakan atau layar pengunjung redup.
             </p>
 
@@ -356,23 +356,23 @@ export function CheckinScannerClient({
                 value={manualCode}
                 onChange={(e) => setManualCode(e.target.value.toUpperCase())}
                 placeholder="Contoh: DEMO000VLD"
-                className="min-h-12 flex-1 rounded-xl border border-stone-300 px-3.5 font-mono text-sm font-bold uppercase tracking-wider text-stone-900 focus:border-[#3730A3] focus:outline-none"
+                className="min-h-12 flex-1 rounded-xl border border-line px-3.5 font-mono text-sm font-bold uppercase tracking-wider text-ink focus:border-gate focus:outline-none"
               />
               <button
                 type="submit"
                 disabled={submitting || !manualCode.trim()}
-                className="min-h-12 rounded-xl bg-[#3730A3] px-5 text-xs font-semibold text-white hover:bg-indigo-900 disabled:bg-stone-300"
+                className="min-h-12 rounded-xl bg-gate px-5 text-xs font-semibold text-white hover:bg-gate-strong disabled:bg-line"
               >
                 {submitting ? "Memeriksa..." : "Check-in"}
               </button>
             </form>
           </div>
 
-          <div className="mt-5 rounded-xl border border-stone-200 bg-[#FAFAF7] p-3.5">
-            <div className="text-xs font-bold text-stone-800">
+          <div className="mt-5 rounded-xl border border-line bg-page p-3.5">
+            <div className="text-xs font-bold text-ink">
               Uji Cepat 3 Hasil Check-in (Skenario Demo Juri)
             </div>
-            <p className="mt-0.5 text-[11px] text-stone-600">
+            <p className="mt-0.5 text-[11px] text-muted">
               Ketuk salah satu kode di bawah untuk langsung mendemonstrasikan ketiga kondisi:
             </p>
             <div className="mt-2.5 flex flex-wrap gap-2">
@@ -413,12 +413,12 @@ export function CheckinScannerClient({
 
       {/* Denah Kehadiran Live */}
       {layout && (
-        <section className="rounded-2xl border border-stone-200 bg-white p-4 shadow-xs">
+        <section className="rounded-2xl border border-line bg-white p-4 shadow-xs">
           <div className="mb-3">
-            <h2 className="text-sm font-bold text-stone-900">
+            <h2 className="text-sm font-bold text-ink">
               Denah Kehadiran Real-time (Hijau = Hadir)
             </h2>
-            <p className="text-xs text-stone-600">
+            <p className="text-xs text-muted">
               Saat tiket valid di-scan, kursi langsung berubah menjadi warna hijau dengan ikon
               centang.
             </p>

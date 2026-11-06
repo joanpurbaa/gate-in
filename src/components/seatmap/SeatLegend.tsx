@@ -10,47 +10,40 @@ interface SeatLegendProps {
 
 export function SeatLegend({ zones, mode }: SeatLegendProps) {
   return (
-    <div className="rounded-xl border border-stone-200 bg-white p-3 shadow-xs">
+    <div className="rounded-input border border-line bg-card p-3">
       {zones.length > 0 && (
         <div className="mb-2.5 flex items-center gap-2 overflow-x-auto pb-1 text-xs">
-          <span className="shrink-0 font-semibold text-stone-500 uppercase tracking-wider">
-            Zona:
-          </span>
+          <span className="shrink-0 font-semibold text-muted">Zona:</span>
           {zones.map((z) => (
             <span
               key={z.id}
-              className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-stone-200 bg-stone-50 px-2.5 py-1 font-medium text-stone-800"
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-line bg-page px-3 py-1 font-medium text-ink"
             >
               <span
-                className="h-3 w-3 rounded-xs border border-black/15"
+                className="h-3 w-3 rounded-xs border border-ink/20"
                 style={{ backgroundColor: z.color }}
               />
               <span>{z.name}</span>
-              <span className="font-semibold text-stone-900">{formatRupiah(z.price)}</span>
+              <span className="font-semibold text-ink">{formatRupiah(z.price)}</span>
             </span>
           ))}
         </div>
       )}
 
-      <div className="flex items-center gap-3 overflow-x-auto text-xs text-stone-700">
-        <span className="shrink-0 font-semibold text-stone-500 uppercase tracking-wider">
-          Status:
-        </span>
+      <div className="flex items-center gap-3.5 overflow-x-auto text-xs text-ink">
+        <span className="shrink-0 font-semibold text-muted">Status:</span>
 
         <span className="inline-flex shrink-0 items-center gap-1.5">
-          <span
-            className="h-3.5 w-3.5 rounded-xs border border-indigo-900/40"
-            style={{ backgroundColor: zones[0]?.color ?? "#6366F1" }}
-          />
-          <span>Tersedia</span>
+          <span className="h-3.5 w-3.5 rounded-xs border-2 border-ink bg-card" />
+          <span>Tersedia (warna sesuai zona)</span>
         </span>
 
         {mode === "select" && (
           <span className="inline-flex shrink-0 items-center gap-1.5">
-            <span className="flex h-3.5 w-3.5 items-center justify-center rounded-xs border-2 border-[#3730A3] bg-[#3730A3] text-[9px] font-bold text-white">
+            <span className="flex h-3.5 w-3.5 items-center justify-center rounded-xs bg-ink text-xs font-bold leading-none text-white ring-2 ring-ink ring-offset-1">
               ✓
             </span>
-            <span className="font-medium text-[#3730A3]">Pilihan Saya</span>
+            <span className="font-semibold text-ink">Dipilih saya</span>
           </span>
         )}
 
@@ -64,8 +57,15 @@ export function SeatLegend({ zones, mode }: SeatLegendProps) {
                 patternUnits="userSpaceOnUse"
                 patternTransform="rotate(45)"
               >
-                <rect width="4" height="4" fill="#F59E0B" />
-                <line x1="0" y1="0" x2="0" y2="4" stroke="#78350F" strokeWidth="1.5" />
+                <rect width="4" height="4" fill="var(--color-seat-held)" />
+                <line
+                  x1="0"
+                  y1="0"
+                  x2="0"
+                  y2="4"
+                  stroke="var(--color-seat-held-stripe)"
+                  strokeWidth="1.5"
+                />
               </pattern>
             </defs>
             <rect
@@ -75,15 +75,15 @@ export function SeatLegend({ zones, mode }: SeatLegendProps) {
               height="14"
               rx="2"
               fill="url(#legend-held-stripes)"
-              stroke="#B45309"
+              stroke="var(--color-seat-held-edge)"
               strokeWidth="1"
             />
           </svg>
-          <span>Dipesan / Ditahan</span>
+          <span>Dipesan / ditahan</span>
         </span>
 
         <span className="inline-flex shrink-0 items-center gap-1.5">
-          <span className="flex h-3.5 w-3.5 items-center justify-center rounded-xs border border-stone-500 bg-[#9CA3AF] text-[9px] font-bold text-white">
+          <span className="flex h-3.5 w-3.5 items-center justify-center rounded-xs border border-seat-sold-edge bg-seat-sold text-xs font-bold leading-none text-white">
             ✕
           </span>
           <span>Terjual</span>
@@ -91,17 +91,17 @@ export function SeatLegend({ zones, mode }: SeatLegendProps) {
 
         {mode === "view" && (
           <span className="inline-flex shrink-0 items-center gap-1.5">
-            <span className="flex h-3.5 w-3.5 items-center justify-center rounded-xs border border-green-800 bg-[#16A34A] text-[9px] font-bold text-white">
+            <span className="flex h-3.5 w-3.5 items-center justify-center rounded-xs border border-seat-checked-edge bg-seat-checked text-xs font-bold leading-none text-white">
               ✓
             </span>
-            <span className="font-semibold text-green-700">Hadir (Check-in)</span>
+            <span className="font-semibold text-seat-checked">Hadir (check-in)</span>
           </span>
         )}
 
         {mode === "edit" && (
           <span className="inline-flex shrink-0 items-center gap-1.5">
-            <span className="h-3.5 w-3.5 rounded-xs border border-dashed border-stone-400 bg-stone-100" />
-            <span>Dihapus / Tanpa Zona</span>
+            <span className="h-3.5 w-3.5 rounded-xs border border-dashed border-seat-void-edge bg-seat-void" />
+            <span>Dihapus / tanpa zona</span>
           </span>
         )}
       </div>

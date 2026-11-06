@@ -2,18 +2,19 @@
 
 import { useMemo, useState } from "react";
 import { SeatMap } from "@/components/seatmap/SeatMap";
-import type {
-  SeatEffectiveStatus,
-  SeatMapItem,
-  SeatMapMode,
-  SeatZoneInfo,
+import {
+  ZONE_COLOR_PALETTE,
+  type SeatEffectiveStatus,
+  type SeatMapItem,
+  type SeatMapMode,
+  type SeatZoneInfo,
 } from "@/components/seatmap/types";
 import { buildLayout, generateAllSeats } from "@/lib/layout/generate";
 import type { GridStagePosition, LayoutGenerator } from "@/lib/layout/types";
 
 const DEMO_ZONES: SeatZoneInfo[] = [
-  { id: "vip", name: "VIP", color: "#6366F1", price: 150000 },
-  { id: "reg", name: "Reguler", color: "#0EA5E9", price: 75000 },
+  { id: "vip", name: "VIP", color: ZONE_COLOR_PALETTE[0].hex, price: 150000 },
+  { id: "reg", name: "Reguler", color: ZONE_COLOR_PALETTE[2].hex, price: 75000 },
 ];
 
 export function SeatMapPlayground() {
@@ -116,8 +117,8 @@ export function SeatMapPlayground() {
     <main className="mx-auto max-w-5xl px-4 py-6">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h1 className="text-xl font-bold text-stone-900">Uji Komponen SeatMap (/dev/seatmap)</h1>
-          <p className="text-xs text-stone-600">
+          <h1 className="text-xl font-bold text-ink">Uji Komponen SeatMap (/dev/seatmap)</h1>
+          <p className="text-xs text-muted">
             Halaman pengujian internal — tidak aktif di produksi. Total kursi aktif:{" "}
             <strong>{seats.filter((s) => !s.removed).length}</strong>
           </p>
@@ -127,7 +128,7 @@ export function SeatMapPlayground() {
           <button
             type="button"
             onClick={randomizeStatus}
-            className="rounded-lg border border-stone-300 bg-white px-3 py-1.5 text-xs font-semibold text-stone-800 hover:bg-stone-100"
+            className="rounded-lg border border-line bg-white px-3 py-1.5 text-xs font-semibold text-ink hover:bg-page"
           >
             Simulasikan Status Acak
           </button>
@@ -139,16 +140,16 @@ export function SeatMapPlayground() {
               setCols(50);
               setAisleCol(25);
             }}
-            className="rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-xs font-semibold text-[#3730A3] hover:bg-indigo-100"
+            className="rounded-lg border border-gate/25 bg-gate/8 px-3 py-1.5 text-xs font-semibold text-gate hover:bg-gate/15"
           >
             Uji 1.500 Kursi (30×50)
           </button>
         </div>
       </div>
 
-      <div className="mb-4 grid grid-cols-1 gap-3 rounded-xl border border-stone-200 bg-white p-4 sm:grid-cols-3">
+      <div className="mb-4 grid grid-cols-1 gap-3 rounded-xl border border-line bg-white p-4 sm:grid-cols-3">
         <div>
-          <label className="block text-xs font-semibold text-stone-700">Bentuk Layout</label>
+          <label className="block text-xs font-semibold text-ink">Bentuk Layout</label>
           <div className="mt-1 flex gap-2">
             <button
               type="button"
@@ -161,8 +162,8 @@ export function SeatMapPlayground() {
               }}
               className={`flex-1 rounded-lg px-3 py-1.5 text-xs font-semibold ${
                 type === "grid"
-                  ? "bg-[#3730A3] text-white"
-                  : "border border-stone-200 bg-stone-50 text-stone-700"
+                  ? "bg-gate text-white"
+                  : "border border-line bg-page text-ink"
               }`}
             >
               Grid (15×20)
@@ -175,8 +176,8 @@ export function SeatMapPlayground() {
               }}
               className={`flex-1 rounded-lg px-3 py-1.5 text-xs font-semibold ${
                 type === "circle"
-                  ? "bg-[#3730A3] text-white"
-                  : "border border-stone-200 bg-stone-50 text-stone-700"
+                  ? "bg-gate text-white"
+                  : "border border-line bg-page text-ink"
               }`}
             >
               Melingkar (96)
@@ -185,7 +186,7 @@ export function SeatMapPlayground() {
         </div>
 
         <div>
-          <label className="block text-xs font-semibold text-stone-700">Mode SeatMap</label>
+          <label className="block text-xs font-semibold text-ink">Mode SeatMap</label>
           <div className="mt-1 flex gap-1.5">
             {(["select", "view", "edit"] as const).map((m) => (
               <button
@@ -194,8 +195,8 @@ export function SeatMapPlayground() {
                 onClick={() => setMode(m)}
                 className={`flex-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold capitalize ${
                   mode === m
-                    ? "bg-[#3730A3] text-white"
-                    : "border border-stone-200 bg-stone-50 text-stone-700"
+                    ? "bg-gate text-white"
+                    : "border border-line bg-page text-ink"
                 }`}
               >
                 {m}
@@ -206,7 +207,7 @@ export function SeatMapPlayground() {
 
         {type === "grid" ? (
           <div className="grid grid-cols-3 gap-2">
-            <label className="text-xs font-medium text-stone-700">
+            <label className="text-xs font-medium text-ink">
               Baris
               <input
                 type="number"
@@ -214,10 +215,10 @@ export function SeatMapPlayground() {
                 max={60}
                 value={rows}
                 onChange={(e) => setRows(Math.max(1, Math.min(60, Number(e.target.value) || 1)))}
-                className="mt-1 w-full rounded-lg border border-stone-300 px-2 py-1 text-xs"
+                className="mt-1 w-full rounded-lg border border-line px-2 py-1 text-xs"
               />
             </label>
-            <label className="text-xs font-medium text-stone-700">
+            <label className="text-xs font-medium text-ink">
               Kolom
               <input
                 type="number"
@@ -225,15 +226,15 @@ export function SeatMapPlayground() {
                 max={60}
                 value={cols}
                 onChange={(e) => setCols(Math.max(1, Math.min(60, Number(e.target.value) || 1)))}
-                className="mt-1 w-full rounded-lg border border-stone-300 px-2 py-1 text-xs"
+                className="mt-1 w-full rounded-lg border border-line px-2 py-1 text-xs"
               />
             </label>
-            <label className="text-xs font-medium text-stone-700">
+            <label className="text-xs font-medium text-ink">
               Panggung
               <select
                 value={stagePosition}
                 onChange={(e) => setStagePosition(e.target.value as GridStagePosition)}
-                className="mt-1 w-full rounded-lg border border-stone-300 px-1.5 py-1 text-xs"
+                className="mt-1 w-full rounded-lg border border-line px-1.5 py-1 text-xs"
               >
                 <option value="top">Atas</option>
                 <option value="bottom">Bawah</option>
@@ -244,7 +245,7 @@ export function SeatMapPlayground() {
           </div>
         ) : (
           <div className="grid grid-cols-3 gap-2">
-            <label className="text-xs font-medium text-stone-700">
+            <label className="text-xs font-medium text-ink">
               Ring
               <input
                 type="number"
@@ -252,19 +253,19 @@ export function SeatMapPlayground() {
                 max={8}
                 value={rings}
                 onChange={(e) => setRings(Math.max(1, Math.min(8, Number(e.target.value) || 1)))}
-                className="mt-1 w-full rounded-lg border border-stone-300 px-2 py-1 text-xs"
+                className="mt-1 w-full rounded-lg border border-line px-2 py-1 text-xs"
               />
             </label>
-            <label className="text-xs font-medium text-stone-700">
+            <label className="text-xs font-medium text-ink">
               Kursi/Ring
               <input
                 type="text"
                 value={seatsPerRingText}
                 onChange={(e) => setSeatsPerRingText(e.target.value)}
-                className="mt-1 w-full rounded-lg border border-stone-300 px-2 py-1 text-xs"
+                className="mt-1 w-full rounded-lg border border-line px-2 py-1 text-xs"
               />
             </label>
-            <label className="text-xs font-medium text-stone-700">
+            <label className="text-xs font-medium text-ink">
               Lorong
               <input
                 type="number"
@@ -272,7 +273,7 @@ export function SeatMapPlayground() {
                 max={8}
                 value={aisleGaps}
                 onChange={(e) => setAisleGaps(Math.max(0, Math.min(8, Number(e.target.value) || 0)))}
-                className="mt-1 w-full rounded-lg border border-stone-300 px-2 py-1 text-xs"
+                className="mt-1 w-full rounded-lg border border-line px-2 py-1 text-xs"
               />
             </label>
           </div>

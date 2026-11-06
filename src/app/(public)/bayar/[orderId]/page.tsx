@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { AlertTriangle, ArrowLeft } from "lucide-react";
+import { ZONE_COLOR_PALETTE } from "@/components/seatmap/types";
 import { prisma } from "@/lib/db";
 import { releaseOrderHold } from "@/lib/seats";
 import { SimulatePaymentClient } from "./SimulatePaymentClient";
@@ -52,23 +53,23 @@ export default async function PaymentPage({
   if (order.status === "FAILED" || order.status === "EXPIRED" || isHoldExpired) {
     return (
       <main className="mx-auto max-w-lg px-4 py-12">
-        <div className="rounded-2xl border border-rose-200 bg-white p-6 text-center shadow-xs">
+        <div className="rounded-card border border-rose-200 bg-card p-6 text-center">
           <AlertTriangle className="mx-auto h-10 w-10 text-rose-600" />
-          <h1 className="mt-3 text-lg font-bold text-stone-900">
+          <h1 className="mt-3 font-display text-lg font-bold text-ink">
             {order.status === "FAILED"
-              ? "Pesanan Telah Dibatalkan / Gagal Dibayar"
-              : "Waktu Tahan Kursi Telah Kedaluwarsa"}
+              ? "Pesanan telah dibatalkan"
+              : "Waktu tahan kursi telah kedaluwarsa"}
           </h1>
-          <p className="mt-2 text-xs leading-relaxed text-stone-600">
+          <p className="mt-2 text-xs leading-relaxed text-muted">
             Kursi pada pesanan ini telah dilepas kembali agar dapat dipilih pengunjung lain.
             Silakan kembali ke denah acara untuk memilih kursi yang masih tersedia.
           </p>
           <Link
             href={`/e/${order.event.slug}/beli`}
-            className="mt-5 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#3730A3] px-5 py-3 text-sm font-semibold text-white hover:bg-indigo-900"
+            className="mt-5 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-button bg-gate px-5 py-3 text-sm font-semibold text-white transition hover:bg-gate-strong"
           >
             <ArrowLeft className="h-4 w-4" />
-            <span>Kembali Pilih Kursi di Denah</span>
+            <span>Pilih kursi</span>
           </Link>
         </div>
       </main>
@@ -92,7 +93,7 @@ export default async function PaymentPage({
         seats: order.seats.map((s) => ({
           label: s.label,
           zoneName: s.zone?.name ?? "Reguler",
-          zoneColor: s.zone?.color ?? "#6366F1",
+          zoneColor: s.zone?.color ?? ZONE_COLOR_PALETTE[0].hex,
           price: s.zone?.price ?? 0,
         })),
       }}

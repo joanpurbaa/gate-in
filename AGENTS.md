@@ -9,9 +9,10 @@ Ini prototype untuk lomba, bukan produk produksi. Prioritas: alur inti jalan mul
 2. `docs/DATA_MODEL.md` — tabel, status, aturan locking kursi
 3. `docs/SEAT_LAYOUT_SPEC.md` — format layout, generator, AI layout
 4. `docs/DESIGN.md` — gaya UI, warna status kursi, daftar halaman
-5. `docs/PROGRESS.md` — checklist tahap; update setiap selesai
-6. `docs/DEMO_SCRIPT.md` — data seed dan skenario demo yang harus lolos
-7. `docs/skills/frontend-ui.md` dan `docs/skills/self-verify.md`
+5. `docs/DESIGN_V2.md` — arah visual, menimpa bagian gaya di DESIGN.md, dan `docs/ASSETS.md`
+6. `docs/PROGRESS.md` — checklist tahap; update setiap selesai
+7. `docs/DEMO_SCRIPT.md` — data seed dan skenario demo yang harus lolos
+8. `docs/skills/frontend-ui.md` dan `docs/skills/self-verify.md`
 
 Dokumen adalah sumber kebenaran. Kalau prompt bertentangan dengan dokumen, **berhenti dan tanya**, jangan memilih sendiri.
 
@@ -31,6 +32,7 @@ Dokumen adalah sumber kebenaran. Kalau prompt bertentangan dengan dokumen, **ber
 
 `prisma`, `@prisma/client`, adapter Neon untuk Prisma, `@neondatabase/serverless`, `zod`, `bcryptjs`, `jose`, `qrcode`, satu library scanner QR berbasis kamera browser (contoh `html5-qrcode`), SDK Google GenAI, `@vercel/blob`, `lucide-react`, `clsx`.
 Library lain: **sebutkan alasannya dan minta izin dulu**.
+Catatan: Tahap 10 sampai 13 tidak menambah library. Carousel dibuat dengan CSS scroll-snap dan sedikit kode sendiri.
 
 ### Environment variable
 
@@ -78,6 +80,7 @@ docs/
 9. Jangan menambah fitur di luar scope PRD. Ide tambahan → tulis di bagian "Saran" di `PROGRESS.md`, jangan dikerjakan.
 10. UI berbahasa Indonesia; nama variabel, fungsi, tabel dalam bahasa Inggris.
 11. Data demo saja. Tidak ada data pribadi atau kartu asli.
+12. Tahap 10 sampai 13 hanya mengubah tampilan dan data tampilan. Dilarang mengubah `src/lib/seats.ts`, logika hold/pay/check-in, dan route API yang sudah ada, kecuali penambahan field kategori seperti tertulis di `DESIGN_V2.md` bagian 10. Setelah setiap tahap, skenario `DEMO_SCRIPT.md` dan skrip uji balapan harus tetap lolos.
 
 ## 4. Cara kerja per tahap
 

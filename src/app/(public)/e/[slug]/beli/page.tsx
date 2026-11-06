@@ -67,11 +67,11 @@ export default async function EventBookingPage({
   if (saleState !== "OPEN") {
     return (
       <main className="mx-auto max-w-xl px-4 py-12 text-center">
-        <div className="rounded-2xl border border-stone-200 bg-white p-6 shadow-xs">
-          <h1 className="text-lg font-bold text-stone-900">
-            Penjualan Tiket Tidak Sedang Aktif
+        <div className="rounded-card border border-line bg-card p-6">
+          <h1 className="font-display text-lg font-bold text-ink">
+            Penjualan tiket tidak sedang aktif
           </h1>
-          <p className="mt-2 text-xs text-stone-600">
+          <p className="mt-2 text-xs text-muted">
             {saleState === "SOLD_OUT"
               ? "Seluruh kursi untuk acara ini telah habis terjual."
               : saleState === "UPCOMING"
@@ -80,10 +80,10 @@ export default async function EventBookingPage({
           </p>
           <Link
             href={`/e/${event.slug}`}
-            className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-xl bg-[#3730A3] px-5 py-2.5 text-xs font-semibold text-white"
+            className="mt-5 inline-flex min-h-12 items-center gap-2 rounded-button bg-gate px-5 py-2.5 text-xs font-semibold text-white transition hover:bg-gate-strong"
           >
             <ArrowLeft className="h-4 w-4" />
-            <span>Kembali ke Halaman Acara</span>
+            <span>Kembali ke halaman acara</span>
           </Link>
         </div>
       </main>

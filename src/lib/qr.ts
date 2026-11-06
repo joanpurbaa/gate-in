@@ -1,5 +1,6 @@
 import { randomBytes } from "node:crypto";
 import QRCode from "qrcode";
+import { BRAND_COLORS } from "@/lib/design-tokens";
 
 // 31 karakter: huruf besar + angka tanpa 0, O, 1, I, L (lihat docs/DATA_MODEL.md bagian 4)
 const TICKET_ALPHABET = "23456789ABCDEFGHJKMNPQRSTUVWXYZ";
@@ -44,8 +45,8 @@ export async function ticketCodeToQrDataUrl(code: string): Promise<string> {
     margin: 2,
     width: 360,
     color: {
-      dark: "#171717",
-      light: "#FFFFFF",
+      dark: BRAND_COLORS.ink,
+      light: BRAND_COLORS.card,
     },
   });
 }

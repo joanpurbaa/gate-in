@@ -183,8 +183,8 @@ export function EventWizardClient({ initial }: { initial: EventWizardInitialData
     initial.zones.length > 0
       ? initial.zones
       : [
-          { clientId: "zone_vip", name: "VIP", color: "#6366F1", price: 150000 },
-          { clientId: "zone_reg", name: "Reguler", color: "#0EA5E9", price: 75000 },
+          { clientId: "zone_vip", name: "VIP", color: ZONE_COLOR_PALETTE[0].hex, price: 150000 },
+          { clientId: "zone_reg", name: "Reguler", color: ZONE_COLOR_PALETTE[2].hex, price: 75000 },
         ]
   );
   const [activeZoneId, setActiveZoneId] = useState<string>(
@@ -544,12 +544,12 @@ export function EventWizardClient({ initial }: { initial: EventWizardInitialData
         <div>
           <Link
             href="/admin"
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-stone-600 hover:text-stone-900"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted hover:text-ink"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
             <span>Kembali ke Dashboard</span>
           </Link>
-          <h1 className="mt-1 text-xl font-bold text-stone-900 sm:text-2xl">
+          <h1 className="mt-1 text-xl font-bold text-ink sm:text-2xl">
             {initial.id ? `Kelola Acara: ${name || initial.name}` : "Buat Acara Baru"}
           </h1>
         </div>
@@ -570,8 +570,8 @@ export function EventWizardClient({ initial }: { initial: EventWizardInitialData
                 onClick={() => setStep(item.n)}
                 className={`rounded-xl px-3 py-2 transition ${
                   step === item.n
-                    ? "bg-[#3730A3] text-white shadow-xs"
-                    : "border border-stone-200 bg-white text-stone-700 hover:bg-stone-50"
+                    ? "bg-gate text-white shadow-xs"
+                    : "border border-line bg-white text-ink hover:bg-page"
                 }`}
               >
                 {item.label}
@@ -599,38 +599,38 @@ export function EventWizardClient({ initial }: { initial: EventWizardInitialData
       {/* LANGKAH 1: INFO DASAR                                                 */}
       {/* ===================================================================== */}
       {step === 1 && (
-        <section className="rounded-2xl border border-stone-200 bg-white p-5 shadow-xs sm:p-6">
-          <h2 className="text-base font-bold text-stone-900">Informasi Dasar & Jadwal Acara</h2>
-          <p className="text-xs text-stone-600">
+        <section className="rounded-2xl border border-line bg-white p-5 shadow-xs sm:p-6">
+          <h2 className="text-base font-bold text-ink">Informasi Dasar & Jadwal Acara</h2>
+          <p className="text-xs text-muted">
             Seluruh jadwal diinput dalam Waktu Indonesia Barat (WIB) dan disimpan UTC di database.
           </p>
 
           <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="sm:col-span-2">
-              <label className="block text-xs font-semibold text-stone-800">Nama Acara *</label>
+              <label className="block text-xs font-semibold text-ink">Nama Acara *</label>
               <input
                 type="text"
                 required
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Contoh: Bandung Tech Summit 2026"
-                className="mt-1 min-h-11 w-full rounded-xl border border-stone-300 px-3.5 py-2 text-sm"
+                className="mt-1 min-h-11 w-full rounded-xl border border-line px-3.5 py-2 text-sm"
               />
             </div>
 
             <div className="sm:col-span-2">
-              <label className="block text-xs font-semibold text-stone-800">Deskripsi Acara</label>
+              <label className="block text-xs font-semibold text-ink">Deskripsi Acara</label>
               <textarea
                 rows={3}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Jelaskan garis besar acara, pengisi acara, dan fasilitas peserta..."
-                className="mt-1 w-full rounded-xl border border-stone-300 px-3.5 py-2 text-sm"
+                className="mt-1 w-full rounded-xl border border-line px-3.5 py-2 text-sm"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-stone-800">
+              <label className="block text-xs font-semibold text-ink">
                 Nama Venue / Ruangan *
               </label>
               <input
@@ -639,35 +639,35 @@ export function EventWizardClient({ initial }: { initial: EventWizardInitialData
                 value={venueName}
                 onChange={(e) => setVenueName(e.target.value)}
                 placeholder="Contoh: Convention Hall Lt. 2, Summarecon Mall Bandung"
-                className="mt-1 min-h-11 w-full rounded-xl border border-stone-300 px-3.5 py-2 text-sm"
+                className="mt-1 min-h-11 w-full rounded-xl border border-line px-3.5 py-2 text-sm"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-stone-800">Alamat Venue</label>
+              <label className="block text-xs font-semibold text-ink">Alamat Venue</label>
               <input
                 type="text"
                 value={venueAddress}
                 onChange={(e) => setVenueAddress(e.target.value)}
                 placeholder="Jl. Grand Bulevar No. 1, Gedebage, Kota Bandung"
-                className="mt-1 min-h-11 w-full rounded-xl border border-stone-300 px-3.5 py-2 text-sm"
+                className="mt-1 min-h-11 w-full rounded-xl border border-line px-3.5 py-2 text-sm"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-stone-800">
+              <label className="block text-xs font-semibold text-ink">
                 Tanggal & Jam Mulai Acara (WIB) *
               </label>
               <input
                 type="datetime-local"
                 value={startsAtWib}
                 onChange={(e) => setStartsAtWib(e.target.value)}
-                className="mt-1 min-h-11 w-full rounded-xl border border-stone-300 px-3.5 py-2 text-sm"
+                className="mt-1 min-h-11 w-full rounded-xl border border-line px-3.5 py-2 text-sm"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-stone-800">
+              <label className="block text-xs font-semibold text-ink">
                 Maks. Kursi per Pesanan (1–10)
               </label>
               <input
@@ -678,60 +678,60 @@ export function EventWizardClient({ initial }: { initial: EventWizardInitialData
                 onChange={(e) =>
                   setMaxSeatsPerOrder(Math.max(1, Math.min(10, Number(e.target.value) || 5)))
                 }
-                className="mt-1 min-h-11 w-full rounded-xl border border-stone-300 px-3.5 py-2 text-sm"
+                className="mt-1 min-h-11 w-full rounded-xl border border-line px-3.5 py-2 text-sm"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-stone-800">
+              <label className="block text-xs font-semibold text-ink">
                 Open Gate Mulai (WIB) *
               </label>
               <input
                 type="datetime-local"
                 value={gateOpenAtWib}
                 onChange={(e) => setGateOpenAtWib(e.target.value)}
-                className="mt-1 min-h-11 w-full rounded-xl border border-stone-300 px-3.5 py-2 text-sm"
+                className="mt-1 min-h-11 w-full rounded-xl border border-line px-3.5 py-2 text-sm"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-stone-800">
+              <label className="block text-xs font-semibold text-ink">
                 Open Gate Selesai (WIB) *
               </label>
               <input
                 type="datetime-local"
                 value={gateCloseAtWib}
                 onChange={(e) => setGateCloseAtWib(e.target.value)}
-                className="mt-1 min-h-11 w-full rounded-xl border border-stone-300 px-3.5 py-2 text-sm"
+                className="mt-1 min-h-11 w-full rounded-xl border border-line px-3.5 py-2 text-sm"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-stone-800">
+              <label className="block text-xs font-semibold text-ink">
                 Penjualan Dibuka (WIB) *
               </label>
               <input
                 type="datetime-local"
                 value={salesOpenAtWib}
                 onChange={(e) => setSalesOpenAtWib(e.target.value)}
-                className="mt-1 min-h-11 w-full rounded-xl border border-stone-300 px-3.5 py-2 text-sm"
+                className="mt-1 min-h-11 w-full rounded-xl border border-line px-3.5 py-2 text-sm"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-stone-800">
+              <label className="block text-xs font-semibold text-ink">
                 Penjualan Ditutup (WIB) *
               </label>
               <input
                 type="datetime-local"
                 value={salesCloseAtWib}
                 onChange={(e) => setSalesCloseAtWib(e.target.value)}
-                className="mt-1 min-h-11 w-full rounded-xl border border-stone-300 px-3.5 py-2 text-sm"
+                className="mt-1 min-h-11 w-full rounded-xl border border-line px-3.5 py-2 text-sm"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-stone-800">
+              <label className="block text-xs font-semibold text-ink">
                 Kontak Penyelenggara
               </label>
               <input
@@ -739,12 +739,12 @@ export function EventWizardClient({ initial }: { initial: EventWizardInitialData
                 value={contactInfo}
                 onChange={(e) => setContactInfo(e.target.value)}
                 placeholder="WhatsApp Panitia: 0812-xxxx-xxxx"
-                className="mt-1 min-h-11 w-full rounded-xl border border-stone-300 px-3.5 py-2 text-sm"
+                className="mt-1 min-h-11 w-full rounded-xl border border-line px-3.5 py-2 text-sm"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-stone-800">
+              <label className="block text-xs font-semibold text-ink">
                 Poster Acara (Opsional — URL atau Unggah Vercel Blob)
               </label>
               <div className="mt-1 flex gap-2">
@@ -753,9 +753,9 @@ export function EventWizardClient({ initial }: { initial: EventWizardInitialData
                   value={posterUrl}
                   onChange={(e) => setPosterUrl(e.target.value)}
                   placeholder="https://..."
-                  className="min-h-11 flex-1 rounded-xl border border-stone-300 px-3.5 py-2 text-sm"
+                  className="min-h-11 flex-1 rounded-xl border border-line px-3.5 py-2 text-sm"
                 />
-                <label className="inline-flex min-h-11 cursor-pointer items-center gap-1.5 rounded-xl border border-stone-300 bg-stone-50 px-3 py-2 text-xs font-semibold text-stone-800 hover:bg-stone-100">
+                <label className="inline-flex min-h-11 cursor-pointer items-center gap-1.5 rounded-xl border border-line bg-page px-3 py-2 text-xs font-semibold text-ink hover:bg-page">
                   <Upload className="h-3.5 w-3.5" />
                   <span>{uploadingPoster ? "Mengunggah..." : "Unggah"}</span>
                   <input
@@ -773,7 +773,7 @@ export function EventWizardClient({ initial }: { initial: EventWizardInitialData
             </div>
 
             <div className="sm:col-span-2">
-              <label className="block text-xs font-semibold text-stone-800">
+              <label className="block text-xs font-semibold text-ink">
                 Catatan Kebijakan Tiket / Refund
               </label>
               <input
@@ -781,7 +781,7 @@ export function EventWizardClient({ initial }: { initial: EventWizardInitialData
                 value={policyNote}
                 onChange={(e) => setPolicyNote(e.target.value)}
                 placeholder="Tiket yang sudah dibeli bersifat final..."
-                className="mt-1 min-h-11 w-full rounded-xl border border-stone-300 px-3.5 py-2 text-sm"
+                className="mt-1 min-h-11 w-full rounded-xl border border-line px-3.5 py-2 text-sm"
               />
             </div>
           </div>
@@ -790,7 +790,7 @@ export function EventWizardClient({ initial }: { initial: EventWizardInitialData
             <button
               type="button"
               onClick={() => setStep(2)}
-              className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-[#3730A3] px-5 py-2.5 text-xs font-semibold text-white hover:bg-indigo-900"
+              className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-gate px-5 py-2.5 text-xs font-semibold text-white hover:bg-gate-strong"
             >
               <span>Lanjut ke Layout Kursi</span>
               <ArrowRight className="h-4 w-4" />
@@ -819,14 +819,14 @@ export function EventWizardClient({ initial }: { initial: EventWizardInitialData
           )}
 
           {/* Panel AI Layout */}
-          <div className="rounded-2xl border border-indigo-200 bg-white p-5 shadow-xs">
-            <div className="flex items-center gap-2 text-[#3730A3]">
+          <div className="rounded-2xl border border-gate/25 bg-white p-5 shadow-xs">
+            <div className="flex items-center gap-2 text-gate">
               <Wand2 className="h-5 w-5" />
-              <h2 className="text-base font-bold text-stone-900">
+              <h2 className="text-base font-bold text-ink">
                 Buat Layout Otomatis dengan AI (Foto + Deskripsi)
               </h2>
             </div>
-            <p className="mt-1 text-xs text-stone-600">
+            <p className="mt-1 text-xs text-muted">
               Unggah foto ruangan (opsional) dan tulis jumlah baris/kolom atau bentuk susunan kursi.
               AI akan menghasilkan parameter terstruktur yang dapat Anda tinjau dan koreksi.
             </p>
@@ -839,12 +839,12 @@ export function EventWizardClient({ initial }: { initial: EventWizardInitialData
                   value={aiDescription}
                   onChange={(e) => setAiDescription(e.target.value)}
                   placeholder="Contoh: Ruangan 20m x 20m, 15 baris dan 20 kolom, panggung di depan, lorong di tengah setelah kolom 10"
-                  className="w-full rounded-xl border border-stone-300 px-3.5 py-2 text-xs text-stone-900"
+                  className="w-full rounded-xl border border-line px-3.5 py-2 text-xs text-ink"
                 />
               </div>
               <div className="flex flex-col gap-2 sm:col-span-4">
-                <label className="flex cursor-pointer items-center justify-center gap-1.5 rounded-xl border border-dashed border-stone-300 bg-stone-50 px-3 py-2 text-xs font-medium text-stone-700 hover:bg-stone-100">
-                  <Upload className="h-3.5 w-3.5 text-[#3730A3]" />
+                <label className="flex cursor-pointer items-center justify-center gap-1.5 rounded-xl border border-dashed border-line bg-page px-3 py-2 text-xs font-medium text-ink hover:bg-page">
+                  <Upload className="h-3.5 w-3.5 text-gate" />
                   <span className="truncate">
                     {aiPhotoFile ? aiPhotoFile.name : "Foto Ruangan (Opsional)"}
                   </span>
@@ -861,7 +861,7 @@ export function EventWizardClient({ initial }: { initial: EventWizardInitialData
                   type="button"
                   disabled={initial.layoutLocked || aiLoading}
                   onClick={handleAnalyzeWithAi}
-                  className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-xl bg-[#3730A3] px-4 py-2 text-xs font-semibold text-white hover:bg-indigo-900 disabled:bg-stone-300"
+                  className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-xl bg-gate px-4 py-2 text-xs font-semibold text-white hover:bg-gate-strong disabled:bg-line"
                 >
                   <Sparkles className="h-3.5 w-3.5" />
                   <span>{aiLoading ? "Menganalisis dengan Gemini..." : "Buat dengan AI"}</span>
@@ -870,7 +870,7 @@ export function EventWizardClient({ initial }: { initial: EventWizardInitialData
             </div>
 
             {aiBanner && (
-              <div className="mt-3 rounded-xl border border-indigo-200 bg-indigo-50/70 px-3.5 py-2.5 text-xs font-medium text-indigo-950">
+              <div className="mt-3 rounded-xl border border-gate/25 bg-gate/8 px-3.5 py-2.5 text-xs font-medium text-ink">
                 {aiBanner}
               </div>
             )}
@@ -888,13 +888,13 @@ export function EventWizardClient({ initial }: { initial: EventWizardInitialData
           </div>
 
           {/* Panel Parameter Manual & Koreksi */}
-          <div className="rounded-2xl border border-stone-200 bg-white p-5 shadow-xs">
+          <div className="rounded-2xl border border-line bg-white p-5 shadow-xs">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
-                <h3 className="text-sm font-bold text-stone-900">
+                <h3 className="text-sm font-bold text-ink">
                   Template & Parameter Layout (Dapat Dikoreksi Langsung)
                 </h3>
-                <p className="text-xs text-stone-600">
+                <p className="text-xs text-muted">
                   Total kursi aktif: <strong>{activeSeats.length}</strong> kursi (maks. 1.500).
                   Ketuk kursi pada preview di bawah untuk menghapus atau memulihkan kursi.
                 </p>
@@ -910,8 +910,8 @@ export function EventWizardClient({ initial }: { initial: EventWizardInitialData
                   }}
                   className={`rounded-xl px-3.5 py-1.5 text-xs font-semibold ${
                     layoutType === "grid"
-                      ? "bg-[#3730A3] text-white"
-                      : "border border-stone-300 bg-stone-50 text-stone-700"
+                      ? "bg-gate text-white"
+                      : "border border-line bg-page text-ink"
                   }`}
                 >
                   Template Grid (Baris × Kolom)
@@ -925,8 +925,8 @@ export function EventWizardClient({ initial }: { initial: EventWizardInitialData
                   }}
                   className={`rounded-xl px-3.5 py-1.5 text-xs font-semibold ${
                     layoutType === "circle"
-                      ? "bg-[#3730A3] text-white"
-                      : "border border-stone-300 bg-stone-50 text-stone-700"
+                      ? "bg-gate text-white"
+                      : "border border-line bg-page text-ink"
                   }`}
                 >
                   Template Melingkar (360°)
@@ -936,7 +936,7 @@ export function EventWizardClient({ initial }: { initial: EventWizardInitialData
 
             {layoutType === "grid" ? (
               <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-6">
-                <label className="text-xs font-semibold text-stone-700">
+                <label className="text-xs font-semibold text-ink">
                   Jumlah Baris (1–60)
                   <input
                     type="number"
@@ -945,10 +945,10 @@ export function EventWizardClient({ initial }: { initial: EventWizardInitialData
                     disabled={initial.layoutLocked}
                     value={gridRows}
                     onChange={(e) => setGridRows(Number(e.target.value) || 1)}
-                    className="mt-1 w-full rounded-lg border border-stone-300 px-2.5 py-1.5 text-xs"
+                    className="mt-1 w-full rounded-lg border border-line px-2.5 py-1.5 text-xs"
                   />
                 </label>
-                <label className="text-xs font-semibold text-stone-700">
+                <label className="text-xs font-semibold text-ink">
                   Jumlah Kolom (1–60)
                   <input
                     type="number"
@@ -957,10 +957,10 @@ export function EventWizardClient({ initial }: { initial: EventWizardInitialData
                     disabled={initial.layoutLocked}
                     value={gridCols}
                     onChange={(e) => setGridCols(Number(e.target.value) || 1)}
-                    className="mt-1 w-full rounded-lg border border-stone-300 px-2.5 py-1.5 text-xs"
+                    className="mt-1 w-full rounded-lg border border-line px-2.5 py-1.5 text-xs"
                   />
                 </label>
-                <label className="text-xs font-semibold text-stone-700">
+                <label className="text-xs font-semibold text-ink">
                   Lorong stlh Kolom
                   <input
                     type="text"
@@ -968,10 +968,10 @@ export function EventWizardClient({ initial }: { initial: EventWizardInitialData
                     value={aisleAfterColsText}
                     onChange={(e) => setAisleAfterColsText(e.target.value)}
                     placeholder="Mis: 10"
-                    className="mt-1 w-full rounded-lg border border-stone-300 px-2.5 py-1.5 text-xs"
+                    className="mt-1 w-full rounded-lg border border-line px-2.5 py-1.5 text-xs"
                   />
                 </label>
-                <label className="text-xs font-semibold text-stone-700">
+                <label className="text-xs font-semibold text-ink">
                   Lorong stlh Baris
                   <input
                     type="text"
@@ -979,16 +979,16 @@ export function EventWizardClient({ initial }: { initial: EventWizardInitialData
                     value={aisleAfterRowsText}
                     onChange={(e) => setAisleAfterRowsText(e.target.value)}
                     placeholder="Mis: 5"
-                    className="mt-1 w-full rounded-lg border border-stone-300 px-2.5 py-1.5 text-xs"
+                    className="mt-1 w-full rounded-lg border border-line px-2.5 py-1.5 text-xs"
                   />
                 </label>
-                <label className="text-xs font-semibold text-stone-700">
+                <label className="text-xs font-semibold text-ink">
                   Posisi Panggung
                   <select
                     disabled={initial.layoutLocked}
                     value={stagePosition}
                     onChange={(e) => setStagePosition(e.target.value as GridStagePosition)}
-                    className="mt-1 w-full rounded-lg border border-stone-300 px-2 py-1.5 text-xs"
+                    className="mt-1 w-full rounded-lg border border-line px-2 py-1.5 text-xs"
                   >
                     <option value="top">Atas (Depan)</option>
                     <option value="bottom">Bawah</option>
@@ -997,20 +997,20 @@ export function EventWizardClient({ initial }: { initial: EventWizardInitialData
                     <option value="none">Tanpa Panggung</option>
                   </select>
                 </label>
-                <label className="text-xs font-semibold text-stone-700">
+                <label className="text-xs font-semibold text-ink">
                   Label Panggung
                   <input
                     type="text"
                     disabled={initial.layoutLocked}
                     value={stageLabel}
                     onChange={(e) => setStageLabel(e.target.value)}
-                    className="mt-1 w-full rounded-lg border border-stone-300 px-2.5 py-1.5 text-xs"
+                    className="mt-1 w-full rounded-lg border border-line px-2.5 py-1.5 text-xs"
                   />
                 </label>
               </div>
             ) : (
               <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-5">
-                <label className="text-xs font-semibold text-stone-700">
+                <label className="text-xs font-semibold text-ink">
                   Jumlah Ring (1–8)
                   <input
                     type="number"
@@ -1019,10 +1019,10 @@ export function EventWizardClient({ initial }: { initial: EventWizardInitialData
                     disabled={initial.layoutLocked}
                     value={circleRings}
                     onChange={(e) => setCircleRings(Number(e.target.value) || 1)}
-                    className="mt-1 w-full rounded-lg border border-stone-300 px-2.5 py-1.5 text-xs"
+                    className="mt-1 w-full rounded-lg border border-line px-2.5 py-1.5 text-xs"
                   />
                 </label>
-                <label className="text-xs font-semibold text-stone-700 sm:col-span-2">
+                <label className="text-xs font-semibold text-ink sm:col-span-2">
                   Kursi per Ring (pisahkan koma)
                   <input
                     type="text"
@@ -1030,10 +1030,10 @@ export function EventWizardClient({ initial }: { initial: EventWizardInitialData
                     value={seatsPerRingText}
                     onChange={(e) => setSeatsPerRingText(e.target.value)}
                     placeholder="24, 32, 40"
-                    className="mt-1 w-full rounded-lg border border-stone-300 px-2.5 py-1.5 text-xs"
+                    className="mt-1 w-full rounded-lg border border-line px-2.5 py-1.5 text-xs"
                   />
                 </label>
-                <label className="text-xs font-semibold text-stone-700">
+                <label className="text-xs font-semibold text-ink">
                   Jumlah Lorong (0–8)
                   <input
                     type="number"
@@ -1042,24 +1042,24 @@ export function EventWizardClient({ initial }: { initial: EventWizardInitialData
                     disabled={initial.layoutLocked}
                     value={circleAisleGaps}
                     onChange={(e) => setCircleAisleGaps(Number(e.target.value) || 0)}
-                    className="mt-1 w-full rounded-lg border border-stone-300 px-2.5 py-1.5 text-xs"
+                    className="mt-1 w-full rounded-lg border border-line px-2.5 py-1.5 text-xs"
                   />
                 </label>
-                <label className="text-xs font-semibold text-stone-700">
+                <label className="text-xs font-semibold text-ink">
                   Label Panggung Tengah
                   <input
                     type="text"
                     disabled={initial.layoutLocked}
                     value={stageLabel}
                     onChange={(e) => setStageLabel(e.target.value)}
-                    className="mt-1 w-full rounded-lg border border-stone-300 px-2.5 py-1.5 text-xs"
+                    className="mt-1 w-full rounded-lg border border-line px-2.5 py-1.5 text-xs"
                   />
                 </label>
               </div>
             )}
 
             {removedLabels.length > 0 && (
-              <div className="mt-3 flex items-center justify-between rounded-xl bg-stone-100 px-3 py-2 text-xs text-stone-700">
+              <div className="mt-3 flex items-center justify-between rounded-xl bg-page px-3 py-2 text-xs text-ink">
                 <span>
                   Kursi dihapus manual ({removedLabels.length}):{" "}
                   <strong className="font-mono">{removedLabels.slice(0, 12).join(", ")}</strong>
@@ -1068,7 +1068,7 @@ export function EventWizardClient({ initial }: { initial: EventWizardInitialData
                   <button
                     type="button"
                     onClick={() => setRemovedLabels([])}
-                    className="font-semibold text-[#3730A3] underline"
+                    className="font-semibold text-gate underline"
                   >
                     Pulihkan Semua
                   </button>
@@ -1090,7 +1090,7 @@ export function EventWizardClient({ initial }: { initial: EventWizardInitialData
               <button
                 type="button"
                 onClick={() => setStep(1)}
-                className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-stone-300 bg-white px-4 py-2 text-xs font-semibold text-stone-700"
+                className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-line bg-white px-4 py-2 text-xs font-semibold text-ink"
               >
                 <ArrowLeft className="h-4 w-4" />
                 <span>Info Dasar</span>
@@ -1098,7 +1098,7 @@ export function EventWizardClient({ initial }: { initial: EventWizardInitialData
               <button
                 type="button"
                 onClick={() => setStep(3)}
-                className="inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-[#3730A3] px-5 py-2 text-xs font-semibold text-white hover:bg-indigo-900"
+                className="inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-gate px-5 py-2 text-xs font-semibold text-white hover:bg-gate-strong"
               >
                 <span>Lanjut ke Zona & Harga</span>
                 <ArrowRight className="h-4 w-4" />
@@ -1113,13 +1113,13 @@ export function EventWizardClient({ initial }: { initial: EventWizardInitialData
       {/* ===================================================================== */}
       {step === 3 && (
         <section className="space-y-4">
-          <div className="rounded-2xl border border-stone-200 bg-white p-5 shadow-xs">
+          <div className="rounded-2xl border border-line bg-white p-5 shadow-xs">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
-                <h2 className="text-base font-bold text-stone-900">
+                <h2 className="text-base font-bold text-ink">
                   Atur Kategori Zona & Harga Kursi
                 </h2>
-                <p className="text-xs text-stone-600">
+                <p className="text-xs text-muted">
                   Tetapkan zona per baris/ring secara cepat, atau ketuk kursi langsung pada denah.
                 </p>
               </div>
@@ -1145,8 +1145,8 @@ export function EventWizardClient({ initial }: { initial: EventWizardInitialData
                   onClick={() => setActiveZoneId(z.clientId)}
                   className={`flex flex-wrap items-center gap-3 rounded-xl border p-3 transition ${
                     activeZoneId === z.clientId
-                      ? "border-[#3730A3] bg-indigo-50/40"
-                      : "border-stone-200 bg-[#FAFAF7]"
+                      ? "border-gate bg-gate/8"
+                      : "border-line bg-page"
                   }`}
                 >
                   <input
@@ -1154,7 +1154,7 @@ export function EventWizardClient({ initial }: { initial: EventWizardInitialData
                     name="activeZone"
                     checked={activeZoneId === z.clientId}
                     onChange={() => setActiveZoneId(z.clientId)}
-                    className="h-4 w-4 accent-[#3730A3]"
+                    className="h-4 w-4 accent-gate"
                   />
 
                   <input
@@ -1167,7 +1167,7 @@ export function EventWizardClient({ initial }: { initial: EventWizardInitialData
                       );
                     }}
                     placeholder="Nama Zona (VIP / Reguler)"
-                    className="min-h-9 flex-1 rounded-lg border border-stone-300 bg-white px-3 py-1 text-xs font-semibold"
+                    className="min-h-9 flex-1 rounded-lg border border-line bg-white px-3 py-1 text-xs font-semibold"
                   />
 
                   <div className="flex items-center gap-1">
@@ -1182,7 +1182,7 @@ export function EventWizardClient({ initial }: { initial: EventWizardInitialData
                           )
                         }
                         className={`h-6 w-6 rounded-md border ${
-                          z.color === c.hex ? "ring-2 ring-[#3730A3] ring-offset-1" : "border-black/15"
+                          z.color === c.hex ? "ring-2 ring-gate ring-offset-1" : "border-black/15"
                         }`}
                         style={{ backgroundColor: c.hex }}
                       />
@@ -1190,7 +1190,7 @@ export function EventWizardClient({ initial }: { initial: EventWizardInitialData
                   </div>
 
                   <div className="flex items-center gap-1.5">
-                    <span className="text-xs font-semibold text-stone-600">Rp</span>
+                    <span className="text-xs font-semibold text-muted">Rp</span>
                     <input
                       type="number"
                       min={0}
@@ -1202,7 +1202,7 @@ export function EventWizardClient({ initial }: { initial: EventWizardInitialData
                           prev.map((item, i) => (i === idx ? { ...item, price: val } : item))
                         );
                       }}
-                      className="min-h-9 w-28 rounded-lg border border-stone-300 bg-white px-2.5 py-1 font-mono text-xs font-semibold"
+                      className="min-h-9 w-28 rounded-lg border border-line bg-white px-2.5 py-1 font-mono text-xs font-semibold"
                     />
                   </div>
 
@@ -1216,7 +1216,7 @@ export function EventWizardClient({ initial }: { initial: EventWizardInitialData
                           setActiveZoneId(next[0].clientId);
                         }
                       }}
-                      className="rounded-lg p-1.5 text-stone-400 hover:bg-rose-50 hover:text-rose-700"
+                      className="rounded-lg p-1.5 text-muted hover:bg-rose-50 hover:text-rose-700"
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>
@@ -1240,7 +1240,7 @@ export function EventWizardClient({ initial }: { initial: EventWizardInitialData
                   ]);
                   setActiveZoneId(id);
                 }}
-                className="inline-flex items-center gap-1.5 rounded-xl border border-stone-300 bg-white px-3.5 py-2 text-xs font-semibold text-stone-800 hover:bg-stone-50"
+                className="inline-flex items-center gap-1.5 rounded-xl border border-line bg-white px-3.5 py-2 text-xs font-semibold text-ink hover:bg-page"
               >
                 <Plus className="h-3.5 w-3.5" />
                 <span>Tambah Kategori Zona</span>
@@ -1248,15 +1248,15 @@ export function EventWizardClient({ initial }: { initial: EventWizardInitialData
             </div>
 
             {/* Alat Terapkan Cepat */}
-            <div className="mt-4 flex flex-wrap items-center gap-2 rounded-xl border border-stone-200 bg-[#FAFAF7] p-3 text-xs">
-              <span className="font-semibold text-stone-700">
+            <div className="mt-4 flex flex-wrap items-center gap-2 rounded-xl border border-line bg-page p-3 text-xs">
+              <span className="font-semibold text-ink">
                 Terapkan Zona Aktif ({zones.find((z) => z.clientId === activeZoneId)?.name}) ke
                 Baris/Ring:
               </span>
               <select
                 value={rowFrom || distinctRows[0] || ""}
                 onChange={(e) => setRowFrom(e.target.value)}
-                className="rounded-lg border border-stone-300 bg-white px-2.5 py-1.5 font-mono text-xs"
+                className="rounded-lg border border-line bg-white px-2.5 py-1.5 font-mono text-xs"
               >
                 {distinctRows.map((r) => (
                   <option key={r} value={r}>
@@ -1268,7 +1268,7 @@ export function EventWizardClient({ initial }: { initial: EventWizardInitialData
               <select
                 value={rowTo || rowFrom || distinctRows[0] || ""}
                 onChange={(e) => setRowTo(e.target.value)}
-                className="rounded-lg border border-stone-300 bg-white px-2.5 py-1.5 font-mono text-xs"
+                className="rounded-lg border border-line bg-white px-2.5 py-1.5 font-mono text-xs"
               >
                 {distinctRows.map((r) => (
                   <option key={r} value={r}>
@@ -1279,14 +1279,14 @@ export function EventWizardClient({ initial }: { initial: EventWizardInitialData
               <button
                 type="button"
                 onClick={applyZoneToRowRange}
-                className="rounded-lg bg-[#3730A3] px-3 py-1.5 font-semibold text-white hover:bg-indigo-900"
+                className="rounded-lg bg-gate px-3 py-1.5 font-semibold text-white hover:bg-gate-strong"
               >
                 Terapkan ke Rentang Ini
               </button>
               <button
                 type="button"
                 onClick={applyZoneToAllUnassigned}
-                className="rounded-lg border border-stone-300 bg-white px-3 py-1.5 font-semibold text-stone-800 hover:bg-stone-100"
+                className="rounded-lg border border-line bg-white px-3 py-1.5 font-semibold text-ink hover:bg-page"
               >
                 Isi Semua Kursi Tanpa Zona
               </button>
@@ -1306,7 +1306,7 @@ export function EventWizardClient({ initial }: { initial: EventWizardInitialData
               <button
                 type="button"
                 onClick={() => setStep(2)}
-                className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-stone-300 bg-white px-4 py-2 text-xs font-semibold text-stone-700"
+                className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-line bg-white px-4 py-2 text-xs font-semibold text-ink"
               >
                 <ArrowLeft className="h-4 w-4" />
                 <span>Layout Kursi</span>
@@ -1314,7 +1314,7 @@ export function EventWizardClient({ initial }: { initial: EventWizardInitialData
               <button
                 type="button"
                 onClick={() => setStep(4)}
-                className="inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-[#3730A3] px-5 py-2 text-xs font-semibold text-white hover:bg-indigo-900"
+                className="inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-gate px-5 py-2 text-xs font-semibold text-white hover:bg-gate-strong"
               >
                 <span>Lanjut ke Review & Publish</span>
                 <ArrowRight className="h-4 w-4" />
@@ -1328,30 +1328,30 @@ export function EventWizardClient({ initial }: { initial: EventWizardInitialData
       {/* LANGKAH 4: REVIEW & PUBLISH                                           */}
       {/* ===================================================================== */}
       {step === 4 && (
-        <section className="rounded-2xl border border-stone-200 bg-white p-5 shadow-xs sm:p-6">
-          <h2 className="text-base font-bold text-stone-900">Tinjau Acara & Publikasikan</h2>
-          <p className="text-xs text-stone-600">
+        <section className="rounded-2xl border border-line bg-white p-5 shadow-xs sm:p-6">
+          <h2 className="text-base font-bold text-ink">Tinjau Acara & Publikasikan</h2>
+          <p className="text-xs text-muted">
             Pastikan seluruh kursi sudah memiliki zona harga sebelum mempublikasikan acara.
           </p>
 
-          <dl className="mt-4 grid grid-cols-1 gap-3 rounded-xl border border-stone-200 bg-[#FAFAF7] p-4 text-xs sm:grid-cols-2">
+          <dl className="mt-4 grid grid-cols-1 gap-3 rounded-xl border border-line bg-page p-4 text-xs sm:grid-cols-2">
             <div>
-              <dt className="text-stone-500">Nama Acara</dt>
-              <dd className="font-bold text-stone-900">{name || "-"}</dd>
+              <dt className="text-muted">Nama Acara</dt>
+              <dd className="font-bold text-ink">{name || "-"}</dd>
             </div>
             <div>
-              <dt className="text-stone-500">Lokasi Venue</dt>
-              <dd className="font-semibold text-stone-900">{venueName || "-"}</dd>
+              <dt className="text-muted">Lokasi Venue</dt>
+              <dd className="font-semibold text-ink">{venueName || "-"}</dd>
             </div>
             <div>
-              <dt className="text-stone-500">Bentuk & Kapasitas Layout</dt>
-              <dd className="font-semibold text-stone-900">
+              <dt className="text-muted">Bentuk & Kapasitas Layout</dt>
+              <dd className="font-semibold text-ink">
                 {layoutType === "circle" ? "Melingkar 360°" : "Grid Baris × Kolom"} •{" "}
                 {activeSeats.length} Kursi Aktif
               </dd>
             </div>
             <div>
-              <dt className="text-stone-500">Status Penetapan Zona</dt>
+              <dt className="text-muted">Status Penetapan Zona</dt>
               <dd
                 className={`font-bold ${
                   unassignedCount === 0 ? "text-emerald-700" : "text-amber-700"
@@ -1365,7 +1365,7 @@ export function EventWizardClient({ initial }: { initial: EventWizardInitialData
           </dl>
 
           <div className="mt-4">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-stone-500">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-muted">
               Ringkasan Kuota per Zona
             </h3>
             <div className="mt-2 grid grid-cols-1 gap-2.5 sm:grid-cols-3">
@@ -1376,7 +1376,7 @@ export function EventWizardClient({ initial }: { initial: EventWizardInitialData
                 return (
                   <div
                     key={z.clientId}
-                    className="flex items-center justify-between rounded-xl border border-stone-200 p-3 text-xs"
+                    className="flex items-center justify-between rounded-xl border border-line p-3 text-xs"
                   >
                     <div className="flex items-center gap-2">
                       <span
@@ -1384,22 +1384,22 @@ export function EventWizardClient({ initial }: { initial: EventWizardInitialData
                         style={{ backgroundColor: z.color }}
                       />
                       <div>
-                        <div className="font-bold text-stone-900">{z.name}</div>
-                        <div className="text-stone-500">{count} kursi</div>
+                        <div className="font-bold text-ink">{z.name}</div>
+                        <div className="text-muted">{count} kursi</div>
                       </div>
                     </div>
-                    <div className="font-bold text-stone-900">{formatRupiah(z.price)}</div>
+                    <div className="font-bold text-ink">{formatRupiah(z.price)}</div>
                   </div>
                 );
               })}
             </div>
           </div>
 
-          <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-stone-200 pt-5">
+          <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-5">
             <button
               type="button"
               onClick={() => setStep(3)}
-              className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-stone-300 bg-white px-4 py-2 text-xs font-semibold text-stone-700"
+              className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-line bg-white px-4 py-2 text-xs font-semibold text-ink"
             >
               <ArrowLeft className="h-4 w-4" />
               <span>Kembali ke Zona</span>
@@ -1410,7 +1410,7 @@ export function EventWizardClient({ initial }: { initial: EventWizardInitialData
                 type="button"
                 disabled={saving}
                 onClick={() => handleSave("DRAFT")}
-                className="min-h-12 rounded-xl border border-stone-300 bg-white px-5 py-2.5 text-xs font-semibold text-stone-800 hover:bg-stone-50 disabled:opacity-50"
+                className="min-h-12 rounded-xl border border-line bg-white px-5 py-2.5 text-xs font-semibold text-ink hover:bg-page disabled:opacity-50"
               >
                 {saving ? "Menyimpan..." : "Simpan sebagai Draft"}
               </button>
@@ -1419,7 +1419,7 @@ export function EventWizardClient({ initial }: { initial: EventWizardInitialData
                 type="button"
                 disabled={saving || unassignedCount > 0 || activeSeats.length === 0}
                 onClick={() => handleSave("PUBLISHED")}
-                className="inline-flex min-h-12 items-center gap-2 rounded-xl bg-[#3730A3] px-6 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-indigo-900 disabled:cursor-not-allowed disabled:bg-stone-300 disabled:text-stone-500"
+                className="inline-flex min-h-12 items-center gap-2 rounded-xl bg-gate px-6 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-gate-strong disabled:cursor-not-allowed disabled:bg-line disabled:text-muted"
               >
                 <CheckCircle2 className="h-4 w-4" />
                 <span>{saving ? "Mempublikasikan..." : "Simpan & Publikasikan Acara"}</span>

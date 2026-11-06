@@ -20,22 +20,22 @@ export function computeSaleState(params: {
 
 const PILL_STYLES: Record<SaleState, { label: string; className: string; dotClass: string }> = {
   OPEN: {
-    label: "Penjualan Dibuka",
+    label: "Penjualan dibuka",
     className: "border-emerald-200 bg-emerald-50 text-emerald-900",
     dotClass: "bg-emerald-600",
   },
   UPCOMING: {
-    label: "Belum Dibuka",
+    label: "Belum dibuka",
     className: "border-amber-200 bg-amber-50 text-amber-900",
     dotClass: "bg-amber-500",
   },
   CLOSED: {
-    label: "Penjualan Ditutup",
-    className: "border-stone-300 bg-stone-100 text-stone-700",
-    dotClass: "bg-stone-500",
+    label: "Ditutup",
+    className: "border-line bg-page text-muted",
+    dotClass: "bg-muted",
   },
   SOLD_OUT: {
-    label: "Habis Terjual",
+    label: "Habis terjual",
     className: "border-rose-200 bg-rose-50 text-rose-900",
     dotClass: "bg-rose-600",
   },
@@ -45,7 +45,7 @@ export function StatusPill({ state }: { state: SaleState }) {
   const cfg = PILL_STYLES[state];
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold ${cfg.className}`}
+      className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold ${cfg.className}`}
     >
       <span className={`h-2 w-2 rounded-full ${cfg.dotClass}`} />
       <span>{cfg.label}</span>

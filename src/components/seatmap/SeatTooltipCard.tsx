@@ -20,15 +20,15 @@ const STATUS_LABEL: Record<SeatMapItem["status"], { text: string; badgeClass: st
     badgeClass: "bg-emerald-50 text-emerald-800 border-emerald-200",
   },
   HELD: {
-    text: "Sedang Dipesan",
+    text: "Sedang dipesan",
     badgeClass: "bg-amber-50 text-amber-800 border-amber-200",
   },
   SOLD: {
     text: "Terjual",
-    badgeClass: "bg-stone-100 text-stone-700 border-stone-300",
+    badgeClass: "bg-page text-muted border-line",
   },
   CHECKED_IN: {
-    text: "Hadir (Sudah Check-in)",
+    text: "Hadir (sudah check-in)",
     badgeClass: "bg-green-100 text-green-800 border-green-300",
   },
 };
@@ -48,21 +48,23 @@ export function SeatTooltipCard({
     <div
       role="dialog"
       aria-label={`Detail kursi ${seat.label}`}
-      className="flex items-center justify-between gap-3 rounded-xl border border-stone-200 bg-white px-3.5 py-2.5 shadow-md"
+      className="flex items-center justify-between gap-3 rounded-input border border-line bg-card px-3.5 py-2.5"
     >
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="font-mono text-sm font-bold text-stone-900">Kursi {seat.label}</span>
+          <span className="font-display text-sm font-bold text-ink">Kursi {seat.label}</span>
           <span
-            className={`inline-flex items-center rounded-md border px-2 py-0.5 text-[11px] font-semibold ${statusInfo.badgeClass}`}
+            className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${
+              isSelected ? "border-ink bg-ink text-white" : statusInfo.badgeClass
+            }`}
           >
-            {isSelected ? "Dipilih Saya" : statusInfo.text}
+            {isSelected ? "Dipilih saya" : statusInfo.text}
           </span>
         </div>
-        <div className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-stone-600">
+        <div className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-muted">
           {zone ? (
             <>
-              <span className="inline-flex items-center gap-1 font-medium text-stone-800">
+              <span className="inline-flex items-center gap-1 font-medium text-ink">
                 <span
                   className="h-2.5 w-2.5 rounded-xs"
                   style={{ backgroundColor: zone.color }}
@@ -70,15 +72,15 @@ export function SeatTooltipCard({
                 {zone.name}
               </span>
               <span>•</span>
-              <span className="font-semibold text-stone-900">{formatRupiah(zone.price)}</span>
+              <span className="font-semibold text-ink">{formatRupiah(zone.price)}</span>
             </>
           ) : (
-            <span className="italic text-stone-500">Belum diberi zona</span>
+            <span className="italic text-muted">Belum diberi zona</span>
           )}
           {mode === "view" && seat.buyerName && (
             <>
               <span>•</span>
-              <span className="truncate font-medium text-stone-800">{seat.buyerName}</span>
+              <span className="truncate font-medium text-ink">{seat.buyerName}</span>
             </>
           )}
         </div>
@@ -90,22 +92,22 @@ export function SeatTooltipCard({
             type="button"
             onClick={() => onToggleSelect(seat)}
             disabled={!isSelected && !canSelectMore}
-            className={`min-h-9 rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
+            className={`min-h-9 rounded-button px-3.5 py-1.5 text-xs font-semibold transition ${
               isSelected
-                ? "border border-stone-300 bg-stone-100 text-stone-800 hover:bg-stone-200"
+                ? "border border-line bg-page text-ink hover:bg-line/60"
                 : canSelectMore
-                  ? "bg-[#3730A3] text-white hover:bg-indigo-900"
-                  : "cursor-not-allowed bg-stone-200 text-stone-500"
+                  ? "bg-gate text-white hover:bg-gate-strong"
+                  : "cursor-not-allowed bg-line text-muted"
             }`}
           >
-            {isSelected ? "Batalkan" : canSelectMore ? "Pilih Kursi" : "Batas Maks."}
+            {isSelected ? "Batalkan" : canSelectMore ? "Pilih kursi" : "Batas maks."}
           </button>
         )}
         <button
           type="button"
           onClick={onClose}
           aria-label="Tutup info kursi"
-          className="rounded-lg p-1.5 text-stone-400 hover:bg-stone-100 hover:text-stone-700"
+          className="rounded-lg p-1.5 text-muted hover:bg-page hover:text-ink"
         >
           <X className="h-4 w-4" />
         </button>

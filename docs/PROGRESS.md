@@ -14,6 +14,10 @@ Agent: centang `[x]` setelah tahap lulus `lint` + `build` + verifikasi di `docs/
 - [x] **7. Check-in + monitoring**: scanner, 3 hasil, denah live hijau, statistik, peserta/transaksi, CSV
 - [x] **8. AI layout**: unggah foto + deskripsi → Gemini → preview → koreksi → simpan; fallback manual
 - [x] **9. Polish & rilis**: poster (Vercel Blob), state kosong/error, QA HP, README, jalankan DEMO_SCRIPT di Vercel
+- [x] **10. Fondasi visual**: token warna dan tipografi, logo, header dan footer, PosterImage dan PosterFallback, perbaikan legenda dan cincin kursi
+- [ ] **11. Beranda marketplace + data realistis**: kategori, isFeatured, organizerName, seed 8 acara, hero carousel, kategori, pencarian, baris acara, kartu karcis, band penjelas dan penyelenggara
+- [ ] **12. Detail acara, alur beli, tiket**: tampilan baru tanpa mengubah logika
+- [ ] **13. Admin dan QA visual**: branding admin, thumbnail poster, wizard kategori dan poster, QA 390px dan 1440px, tangkapan layar sebelum dan sesudah
 
 ## Kontrak env final (isi oleh agent di Tahap 1)
 
@@ -36,6 +40,16 @@ Agent: centang `[x]` setelah tahap lulus `lint` + `build` + verifikasi di `docs/
 - **Schema `neon_auth` bawaan Neon**: dibiarkan tidak tersentuh; semua tabel aplikasi berada di schema `public`.
 - **Atomic Seat Locking (`src/lib/seats.ts`)**: menggunakan satu statement CTE `SELECT ... ORDER BY "id" FOR UPDATE` + `UPDATE "Seat"` untuk mencegah race condition sekaligus mencegah deadlock pada pemilihan multi-kursi. Diuji dengan 8 request paralel di `scripts/test-locking.ts`.
 - **AI Layout Fallback Kuota Free Tier (`src/lib/ai/layout.ts`)**: membaca `GEMINI_MODEL` dari env (`gemini-2.5-flash`) dan bila terkena limit RPM free tier (`429 RESOURCE_EXHAUSTED`), otomatis melakukan retry 1x ke `gemini-2.5-flash-lite` agar demo tidak gagal. Diuji pada 5 skenario di `scripts/test-ai-layout.ts`.
+- **Tahap 10 (Fondasi Visual)**:
+  - Token warna, tiered radius (`20px` kartu, `14px` tombol, `12px` input), dan skala tipografi (12–56px) diterapkan di `src/app/globals.css` dan diekspos ke TS di `src/lib/design-tokens.ts`. Semua token indigo lama digantikan Gerbang (`#E14D2A`), Batu (`#1C1917`), Tinta (`#0F172A`), dll.
+  - Font Bricolage Grotesque (700, 800) dan Figtree (400, 500, 600) dimuat via `next/font/google`.
+  - Aset brand mandiri dibuat di `public/brand/` (`gatein-mark.svg`, `gatein-mark-reversed.svg`, `gatein-mark-mono.svg`, `favicon.svg`), komponen `Logo` menggabungkan mark + teks "GateIn".
+  - Dynamic `apple-icon.tsx` (180x180) dan `opengraph-image.tsx` (1200x630) menggunakan `ImageResponse`.
+  - Header publik baru dengan search bar pil (overlay full-screen di 390px), chip "Bandung, Summarecon", dan tombol "Untuk penyelenggara".
+  - Komponen dasar baru: `Button`, `Chip`, `Badge`, `SectionHeader`, `Skeleton`, `PosterFallback`, `PosterImage`, `PublicFooter`. Halaman playground dev `/dev/poster` aktif untuk menguji 10 variasi fallback.
+  - Denah kursi: legenda "Tersedia (warna sesuai zona)" berbingkai tegas; seleksi "Dipilih saya" memakai warna Tinta dan ikon centang.
+  - Build produksi distandarkan menggunakan `next build --webpack` untuk memastikan keandalan kompilasi.
+  - Tangkapan layar tersimpan di `docs/screenshots/before/` dan `docs/screenshots/after-10/`.
 - **Uji Kirim WhatsApp Fonnte**: telah diuji langsung ke nomor `082275338090` (`6282275338090`) dengan hasil `{ status: 'SENT' }` dan kode tiket `YM6D542KNM` (kursi `A-10` VIP) yang tetap aktif (`VALID`) di database bersama tiket seed `DEMO000VLD` (`VALID`) dan `DEMO000USD` (`USED`).
 
 ## Masalah Terbuka

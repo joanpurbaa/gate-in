@@ -11,31 +11,31 @@ export default function AdminError({
   reset: () => void;
 }) {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-12">
-      <div className="w-full max-w-md rounded-xl border border-slate-200 bg-white p-6 text-center shadow-sm">
-        <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-red-100 text-red-600">
+    <div className="flex min-h-screen items-center justify-center bg-page px-4 py-12">
+      <div className="w-full max-w-md rounded-card border border-line bg-card p-6 text-center">
+        <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-rose-100 text-rose-600">
           <AlertTriangle className="h-6 w-6" />
         </div>
-        <h2 className="text-lg font-bold text-slate-900">
-          Terjadi Kendala di Panel Penyelenggara
+        <h2 className="font-display text-lg font-bold text-ink">
+          Terjadi kendala di panel penyelenggara
         </h2>
-        <p className="mt-1.5 text-sm text-slate-600">
+        <p className="mt-1.5 text-sm text-muted">
           {error.message || "Gagal memuat halaman admin. Silakan muat ulang atau kembali ke dasbor."}
         </p>
         <div className="mt-5 flex items-center justify-center gap-3">
           <button
             type="button"
             onClick={reset}
-            className="inline-flex h-11 items-center gap-2 rounded-xl bg-teal-600 px-4 text-sm font-semibold text-white hover:bg-teal-700"
+            className="inline-flex min-h-11 items-center gap-2 rounded-button bg-gate px-4 text-sm font-semibold text-white transition hover:bg-gate-strong"
           >
             <RotateCcw className="h-4 w-4" />
-            Coba Lagi
+            Coba lagi
           </button>
           <Link
             href="/admin"
-            className="inline-flex h-11 items-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            className="inline-flex min-h-11 items-center rounded-button border border-line bg-card px-4 text-sm font-medium text-ink hover:bg-page"
           >
-            Dasbor Admin
+            Dasbor admin
           </Link>
         </div>
       </div>

@@ -140,7 +140,7 @@ export function EventMonitorClient({
         <div>
           <Link
             href="/admin"
-            className="inline-flex items-center gap-1 text-xs font-semibold text-stone-600 hover:text-stone-900"
+            className="inline-flex items-center gap-1 text-xs font-semibold text-muted hover:text-ink"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
             <span>Kembali ke Dashboard</span>
@@ -150,20 +150,20 @@ export function EventMonitorClient({
               className={`rounded-full border px-2.5 py-0.5 text-[11px] font-bold ${
                 event.status === "PUBLISHED"
                   ? "border-emerald-200 bg-emerald-50 text-emerald-800"
-                  : "border-stone-300 bg-stone-100 text-stone-700"
+                  : "border-line bg-page text-ink"
               }`}
             >
               {event.status}
             </span>
-            <h1 className="text-xl font-bold text-stone-900 sm:text-2xl">{event.name}</h1>
+            <h1 className="text-xl font-bold text-ink sm:text-2xl">{event.name}</h1>
           </div>
-          <div className="mt-1 flex flex-wrap items-center gap-3 text-xs text-stone-600">
+          <div className="mt-1 flex flex-wrap items-center gap-3 text-xs text-muted">
             <span className="inline-flex items-center gap-1">
-              <Calendar className="h-3.5 w-3.5 text-[#3730A3]" />
+              <Calendar className="h-3.5 w-3.5 text-gate" />
               {formatDateTime(event.startsAt)}
             </span>
             <span className="inline-flex items-center gap-1">
-              <MapPin className="h-3.5 w-3.5 text-[#3730A3]" />
+              <MapPin className="h-3.5 w-3.5 text-gate" />
               {event.venueName}
             </span>
           </div>
@@ -181,7 +181,7 @@ export function EventMonitorClient({
               </Link>
               <Link
                 href={`/e/${event.slug}`}
-                className="inline-flex min-h-10 items-center gap-1.5 rounded-xl border border-stone-300 bg-white px-3.5 py-2 text-xs font-semibold text-stone-800 hover:bg-stone-50"
+                className="inline-flex min-h-10 items-center gap-1.5 rounded-xl border border-line bg-white px-3.5 py-2 text-xs font-semibold text-ink hover:bg-page"
               >
                 <span>Halaman Publik</span>
                 <ExternalLink className="h-3.5 w-3.5" />
@@ -190,7 +190,7 @@ export function EventMonitorClient({
           )}
           <Link
             href={`/admin/events/${event.id}/edit`}
-            className="inline-flex min-h-10 items-center gap-1.5 rounded-xl border border-stone-300 bg-white px-3.5 py-2 text-xs font-semibold text-stone-800 hover:bg-stone-50"
+            className="inline-flex min-h-10 items-center gap-1.5 rounded-xl border border-line bg-white px-3.5 py-2 text-xs font-semibold text-ink hover:bg-page"
           >
             <Edit3 className="h-3.5 w-3.5" />
             <span>Ubah Acara</span>
@@ -225,19 +225,19 @@ export function EventMonitorClient({
       </div>
 
       {/* Denah Live */}
-      <section className="mb-7 rounded-2xl border border-stone-200 bg-white p-5 shadow-xs">
+      <section className="mb-7 rounded-2xl border border-line bg-white p-5 shadow-xs">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
           <div>
-            <h2 className="text-base font-bold text-stone-900">
+            <h2 className="text-base font-bold text-ink">
               Pemantauan Denah Kursi & Kehadiran Live
             </h2>
-            <p className="text-xs text-stone-600">
+            <p className="text-xs text-muted">
               Kursi berwarna <strong>hijau dengan centang</strong> menandakan pemilik tiket sudah
               hadir dan melakukan check-in.
             </p>
           </div>
-          <div className="flex items-center gap-1.5 text-xs text-stone-500">
-            <RefreshCw className="h-3.5 w-3.5 text-[#3730A3]" />
+          <div className="flex items-center gap-1.5 text-xs text-muted">
+            <RefreshCw className="h-3.5 w-3.5 text-gate" />
             <span>Auto-refresh 3 dtk ({lastUpdated.toLocaleTimeString("id-ID")})</span>
           </div>
         </div>
@@ -245,11 +245,11 @@ export function EventMonitorClient({
         {layout ? (
           <SeatMap layout={layout} seats={seats} zones={zones} mode="view" />
         ) : (
-          <div className="rounded-xl border border-dashed border-stone-300 bg-stone-50 p-8 text-center text-xs text-stone-600">
+          <div className="rounded-xl border border-dashed border-line bg-page p-8 text-center text-xs text-muted">
             Acara ini belum memiliki denah kursi.{" "}
             <Link
               href={`/admin/events/${event.id}/edit`}
-              className="font-bold text-[#3730A3] underline"
+              className="font-bold text-gate underline"
             >
               Susun layout di wizard
             </Link>
@@ -259,8 +259,8 @@ export function EventMonitorClient({
       </section>
 
       {/* Tabel Peserta & Transaksi + Unduh CSV */}
-      <section className="rounded-2xl border border-stone-200 bg-white p-5 shadow-xs">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-stone-200 pb-4">
+      <section className="rounded-2xl border border-line bg-white p-5 shadow-xs">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line pb-4">
           <div className="flex gap-2">
             <button
               type="button"
@@ -270,8 +270,8 @@ export function EventMonitorClient({
               }}
               className={`rounded-xl px-4 py-2 text-xs font-semibold ${
                 activeTab === "peserta"
-                  ? "bg-[#3730A3] text-white"
-                  : "border border-stone-200 bg-stone-50 text-stone-700"
+                  ? "bg-gate text-white"
+                  : "border border-line bg-page text-ink"
               }`}
             >
               Daftar Peserta & Tiket ({participants.length})
@@ -284,8 +284,8 @@ export function EventMonitorClient({
               }}
               className={`rounded-xl px-4 py-2 text-xs font-semibold ${
                 activeTab === "transaksi"
-                  ? "bg-[#3730A3] text-white"
-                  : "border border-stone-200 bg-stone-50 text-stone-700"
+                  ? "bg-gate text-white"
+                  : "border border-line bg-page text-ink"
               }`}
             >
               Daftar Transaksi ({orders.length})
@@ -295,16 +295,16 @@ export function EventMonitorClient({
           <div className="flex flex-wrap gap-2">
             <a
               href={`/api/admin/events/${event.id}/export?type=peserta`}
-              className="inline-flex min-h-9 items-center gap-1.5 rounded-xl border border-stone-300 bg-white px-3.5 py-1.5 text-xs font-semibold text-stone-800 hover:bg-stone-50"
+              className="inline-flex min-h-9 items-center gap-1.5 rounded-xl border border-line bg-white px-3.5 py-1.5 text-xs font-semibold text-ink hover:bg-page"
             >
-              <Download className="h-3.5 w-3.5 text-[#3730A3]" />
+              <Download className="h-3.5 w-3.5 text-gate" />
               <span>Unduh CSV Peserta</span>
             </a>
             <a
               href={`/api/admin/events/${event.id}/export?type=transaksi`}
-              className="inline-flex min-h-9 items-center gap-1.5 rounded-xl border border-stone-300 bg-white px-3.5 py-1.5 text-xs font-semibold text-stone-800 hover:bg-stone-50"
+              className="inline-flex min-h-9 items-center gap-1.5 rounded-xl border border-line bg-white px-3.5 py-1.5 text-xs font-semibold text-ink hover:bg-page"
             >
-              <Download className="h-3.5 w-3.5 text-[#3730A3]" />
+              <Download className="h-3.5 w-3.5 text-gate" />
               <span>Unduh CSV Transaksi</span>
             </a>
           </div>
@@ -313,20 +313,20 @@ export function EventMonitorClient({
         {/* Filter & Pencarian */}
         <div className="mt-4 flex flex-wrap items-center gap-3">
           <div className="relative flex-1 min-w-[220px]">
-            <Search className="pointer-events-none absolute top-2.5 left-3 h-4 w-4 text-stone-400" />
+            <Search className="pointer-events-none absolute top-2.5 left-3 h-4 w-4 text-muted" />
             <input
               type="search"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Cari nama, nomor WA, kursi (mis. C-8), atau kode tiket..."
-              className="min-h-9 w-full rounded-xl border border-stone-300 py-1.5 pr-3 pl-9 text-xs"
+              className="min-h-9 w-full rounded-xl border border-line py-1.5 pr-3 pl-9 text-xs"
             />
           </div>
 
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="min-h-9 rounded-xl border border-stone-300 bg-white px-3 py-1.5 text-xs font-semibold text-stone-700"
+            className="min-h-9 rounded-xl border border-line bg-white px-3 py-1.5 text-xs font-semibold text-ink"
           >
             <option value="ALL">Semua Status</option>
             {activeTab === "peserta" ? (
@@ -350,7 +350,7 @@ export function EventMonitorClient({
           <div className="mt-4 overflow-x-auto">
             <table className="w-full min-w-[680px] border-collapse text-left text-xs">
               <thead>
-                <tr className="border-b border-stone-200 bg-stone-50 text-stone-600">
+                <tr className="border-b border-line bg-page text-muted">
                   <th className="px-3 py-2.5 font-semibold">Kode Tiket</th>
                   <th className="px-3 py-2.5 font-semibold">Kursi & Zona</th>
                   <th className="px-3 py-2.5 font-semibold">Nama Peserta</th>
@@ -359,42 +359,42 @@ export function EventMonitorClient({
                   <th className="px-3 py-2.5 font-semibold">Waktu Check-in</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-stone-100">
+              <tbody className="divide-y divide-line">
                 {filteredParticipants.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-3 py-8 text-center text-stone-500">
+                    <td colSpan={6} className="px-3 py-8 text-center text-muted">
                       Tidak ada data peserta yang cocok dengan pencarian.
                     </td>
                   </tr>
                 ) : (
                   filteredParticipants.map((p) => (
-                    <tr key={p.code} className="hover:bg-stone-50/70">
-                      <td className="px-3 py-2.5 font-mono font-bold text-stone-900">
+                    <tr key={p.code} className="hover:bg-page">
+                      <td className="px-3 py-2.5 font-mono font-bold text-ink">
                         <Link
                           href={`/tiket/${p.code}`}
-                          className="text-[#3730A3] hover:underline"
+                          className="text-gate hover:underline"
                         >
                           {p.code}
                         </Link>
                       </td>
                       <td className="px-3 py-2.5">
-                        <span className="font-mono font-bold text-stone-900">{p.seatLabel}</span>
-                        <span className="ml-1.5 text-stone-500">({p.zoneName})</span>
+                        <span className="font-mono font-bold text-ink">{p.seatLabel}</span>
+                        <span className="ml-1.5 text-muted">({p.zoneName})</span>
                       </td>
-                      <td className="px-3 py-2.5 font-medium text-stone-900">{p.buyerName}</td>
-                      <td className="px-3 py-2.5 font-mono text-stone-600">{p.buyerPhone}</td>
+                      <td className="px-3 py-2.5 font-medium text-ink">{p.buyerName}</td>
+                      <td className="px-3 py-2.5 font-mono text-muted">{p.buyerPhone}</td>
                       <td className="px-3 py-2.5">
                         <span
                           className={`inline-flex rounded-full border px-2.5 py-0.5 text-[11px] font-bold ${
                             p.status === "USED"
                               ? "border-green-200 bg-green-100 text-green-800"
-                              : "border-stone-200 bg-stone-100 text-stone-700"
+                              : "border-line bg-page text-ink"
                           }`}
                         >
                           {p.status === "USED" ? "HADIR" : "BELUM CHECK-IN"}
                         </span>
                       </td>
-                      <td className="px-3 py-2.5 text-stone-600">
+                      <td className="px-3 py-2.5 text-muted">
                         {p.checkedInAt ? formatShortDateTime(p.checkedInAt) : "-"}
                       </td>
                     </tr>
@@ -407,7 +407,7 @@ export function EventMonitorClient({
           <div className="mt-4 overflow-x-auto">
             <table className="w-full min-w-[720px] border-collapse text-left text-xs">
               <thead>
-                <tr className="border-b border-stone-200 bg-stone-50 text-stone-600">
+                <tr className="border-b border-line bg-page text-muted">
                   <th className="px-3 py-2.5 font-semibold">ID Pesanan</th>
                   <th className="px-3 py-2.5 font-semibold">Pemesan</th>
                   <th className="px-3 py-2.5 font-semibold">Kursi</th>
@@ -417,32 +417,32 @@ export function EventMonitorClient({
                   <th className="px-3 py-2.5 font-semibold">Waktu</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-stone-100">
+              <tbody className="divide-y divide-line">
                 {filteredOrders.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-3 py-8 text-center text-stone-500">
+                    <td colSpan={7} className="px-3 py-8 text-center text-muted">
                       Tidak ada transaksi yang cocok dengan pencarian.
                     </td>
                   </tr>
                 ) : (
                   filteredOrders.map((o) => (
-                    <tr key={o.id} className="hover:bg-stone-50/70">
-                      <td className="px-3 py-2.5 font-mono font-semibold text-stone-900">
+                    <tr key={o.id} className="hover:bg-page">
+                      <td className="px-3 py-2.5 font-mono font-semibold text-ink">
                         <Link
                           href={`/pesanan/${o.id}`}
-                          className="text-[#3730A3] hover:underline"
+                          className="text-gate hover:underline"
                         >
                           {o.id}
                         </Link>
                       </td>
                       <td className="px-3 py-2.5">
-                        <div className="font-medium text-stone-900">{o.buyerName}</div>
-                        <div className="font-mono text-[11px] text-stone-500">{o.buyerPhone}</div>
+                        <div className="font-medium text-ink">{o.buyerName}</div>
+                        <div className="font-mono text-[11px] text-muted">{o.buyerPhone}</div>
                       </td>
-                      <td className="px-3 py-2.5 font-mono font-bold text-stone-800">
+                      <td className="px-3 py-2.5 font-mono font-bold text-ink">
                         {o.seatLabels.join(", ") || "-"}
                       </td>
-                      <td className="px-3 py-2.5 font-semibold text-stone-900">
+                      <td className="px-3 py-2.5 font-semibold text-ink">
                         {formatRupiah(o.totalAmount)}
                       </td>
                       <td className="px-3 py-2.5">
@@ -458,10 +458,10 @@ export function EventMonitorClient({
                           {o.status}
                         </span>
                       </td>
-                      <td className="px-3 py-2.5 font-mono text-[11px] text-stone-600">
+                      <td className="px-3 py-2.5 font-mono text-[11px] text-muted">
                         {o.waStatus ?? "-"}
                       </td>
-                      <td className="px-3 py-2.5 text-stone-600">
+                      <td className="px-3 py-2.5 text-muted">
                         {formatShortDateTime(o.paidAt ?? o.createdAt)}
                       </td>
                     </tr>

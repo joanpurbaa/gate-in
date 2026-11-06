@@ -1,5 +1,6 @@
 import { AdminHeader } from "@/components/admin/AdminHeader";
 import { EventWizardClient } from "@/components/admin/EventWizardClient";
+import { ZONE_COLOR_PALETTE } from "@/components/seatmap/types";
 import { requireAdminPageSession } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
@@ -12,7 +13,7 @@ export default async function NewEventPage() {
   const startsAt = new Date(now.getTime() + 7 * day);
 
   return (
-    <div className="min-h-screen bg-[#FAFAF7]">
+    <div className="min-h-screen bg-page">
       <AdminHeader organizerName={session.name} organizerEmail={session.email} />
       <EventWizardClient
         initial={{
@@ -34,8 +35,8 @@ export default async function NewEventPage() {
           stageLabel: "PANGGUNG",
           generator: null,
           zones: [
-            { clientId: "zone_vip", name: "VIP", color: "#6366F1", price: 150000 },
-            { clientId: "zone_reg", name: "Reguler", color: "#0EA5E9", price: 75000 },
+            { clientId: "zone_vip", name: "VIP", color: ZONE_COLOR_PALETTE[0].hex, price: 150000 },
+            { clientId: "zone_reg", name: "Reguler", color: ZONE_COLOR_PALETTE[2].hex, price: 75000 },
           ],
           seatZoneByLabel: {},
         }}

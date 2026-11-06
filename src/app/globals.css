@@ -1,20 +1,105 @@
 @import "tailwindcss";
 
-:root {
-  --background: #FAFAF7;
-  --foreground: #171717;
-  --accent: #3730A3;
+/*
+ * Token desain GateIn (docs/DESIGN_V2.md bagian 2).
+ * Satu-satunya tempat hex warna UI. Komponen memakai kelas Tailwind
+ * (bg-gate, text-ink, border-line, ...) atau var(--color-*) di SVG.
+ * Konteks non-CSS (ImageResponse, canvas) memakai src/lib/design-tokens.ts.
+ */
+@theme {
+  /* Warna inti */
+  --color-ink: #12112b; /* Tinta */
+  --color-gate: #2b2be8; /* Gerbang */
+  --color-ticket: #d4ff3a; /* Karcis (sorotan kecil, selalu dengan teks Tinta) */
+  --color-page: #f7f8fc; /* Halaman */
+  --color-card: #ffffff; /* Kartu */
+  --color-line: #e3e5f0; /* Garis */
+  --color-muted: #5b5e7a; /* Redam */
+
+  /* Turunan (hover dan poster generatif) */
+  --color-gate-strong: #1f1fc2;
+  --color-gate-soft: #7474f2;
+  --color-gate-tint: #dedefc;
+  --color-ink-soft: #26254d;
+
+  /* Status kursi (docs/DESIGN.md bagian 2, tetap berlaku) */
+  --color-seat-held: #f59e0b;
+  --color-seat-held-edge: #b45309;
+  --color-seat-held-stripe: #78350f;
+  --color-seat-sold: #9ca3af;
+  --color-seat-sold-edge: #4b5563;
+  --color-seat-checked: #16a34a;
+  --color-seat-checked-edge: #14532d;
+  --color-seat-void: #f1f2f7;
+  --color-seat-void-edge: #a3a6bd;
+
+  /* Radius bertingkat */
+  --radius-card: 20px; /* poster dan kartu karcis */
+  --radius-button: 14px;
+  --radius-input: 12px;
+
+  /* Skala tipografi: 12, 14, 16, 20, 28, 40, 56.
+     lg/xl dan 2xl/3xl sengaja disamakan agar kelas lama ikut skala. */
+  --text-xs: 0.75rem;
+  --text-xs--line-height: 1.5;
+  --text-sm: 0.875rem;
+  --text-sm--line-height: 1.5;
+  --text-base: 1rem;
+  --text-base--line-height: 1.55;
+  --text-lg: 1.25rem;
+  --text-lg--line-height: 1.35;
+  --text-xl: 1.25rem;
+  --text-xl--line-height: 1.35;
+  --text-2xl: 1.75rem;
+  --text-2xl--line-height: 1.2;
+  --text-3xl: 1.75rem;
+  --text-3xl--line-height: 1.2;
+  --text-4xl: 2.5rem;
+  --text-4xl--line-height: 1.1;
+  --text-5xl: 3.5rem;
+  --text-5xl--line-height: 1.05;
+
+  --font-mono: ui-monospace, "SF Mono", Menlo, monospace;
 }
 
+/* Huruf dari next/font (variabel --font-figtree dan --font-bricolage di <html>) */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans), system-ui, -apple-system, sans-serif;
-  --font-mono: var(--font-mono), ui-monospace, monospace;
+  --font-sans: var(--font-figtree), system-ui, -apple-system, sans-serif;
+  --font-display: var(--font-bricolage), var(--font-figtree), system-ui, sans-serif;
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
+@layer base {
+  html {
+    background: var(--color-page);
+    color: var(--color-ink);
+  }
+
+  body {
+    background: var(--color-page);
+    color: var(--color-ink);
+    font-family: var(--font-figtree), system-ui, -apple-system, sans-serif;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-bricolage), var(--font-figtree), system-ui, sans-serif;
+    letter-spacing: -0.02em;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-gate);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
 }

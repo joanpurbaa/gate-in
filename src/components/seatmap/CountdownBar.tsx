@@ -36,34 +36,32 @@ export function CountdownBar({ expiresAt, onExpire }: CountdownBarProps) {
     <div
       role="timer"
       aria-live="polite"
-      className={`flex items-center justify-between gap-3 rounded-xl border px-4 py-3 text-xs font-medium ${
+      className={`flex items-center justify-between gap-3 rounded-input border px-4 py-3 text-xs font-medium ${
         isExpired
           ? "border-rose-300 bg-rose-50 text-rose-900"
-          : isUrgent
-            ? "border-amber-300 bg-amber-50 text-amber-900"
-            : "border-indigo-200 bg-indigo-50/90 text-indigo-950"
+          : "border-line bg-card text-ink"
       }`}
     >
       <div className="flex items-center gap-2">
         {isExpired ? (
           <AlertTriangle className="h-4 w-4 shrink-0 text-rose-600" />
         ) : (
-          <Clock className="h-4 w-4 shrink-0 text-[#3730A3]" />
+          <Clock className="h-4 w-4 shrink-0 text-gate" />
         )}
         <span>
           {isExpired
             ? "Waktu tahan kursi telah berakhir. Kursi dilepas kembali untuk pengunjung lain."
-            : "Kursi Anda ditahan sementara. Selesaikan pembayaran sebelum:"}
+            : "Kursimu ditahan sementara. Selesaikan pembayaran sebelum:"}
         </span>
       </div>
 
       <span
-        className={`shrink-0 rounded-lg px-2.5 py-1 font-mono text-sm font-bold ${
+        className={`shrink-0 rounded-full px-3 py-1 font-display text-sm font-extrabold ${
           isExpired
-            ? "bg-rose-200/80 text-rose-950"
+            ? "bg-rose-200 text-rose-950"
             : isUrgent
-              ? "bg-amber-200/80 text-amber-950"
-              : "bg-[#3730A3] text-white"
+              ? "bg-ticket text-ink"
+              : "bg-ink text-white"
         }`}
       >
         {mins}:{secs}

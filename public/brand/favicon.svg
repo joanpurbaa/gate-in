@@ -1,0 +1,6 @@
+<!-- SEMENTARA: mark buatan agent, ganti dengan berkas asli dari desainer. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
+  <path d="M6 24A18 18 0 0 1 42 24V29A4 4 0 0 0 42 37V44H33V26A9 9 0 0 0 15 26V44H6V37A4 4 0 0 0 6 29Z" fill="#2B2BE8"/>
+  <path d="M15 44V26A9 9 0 0 1 33 26V44Z" fill="#12112B"/>
+  <g fill="#D4FF3A"><circle cx="24" cy="29" r="3.2"/><path d="M18.5 44V39.5A5.5 5.5 0 0 1 29.5 39.5V44Z"/></g>
+</svg>

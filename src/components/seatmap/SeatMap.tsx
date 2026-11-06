@@ -45,35 +45,35 @@ const SeatNode = memo(function SeatNode({
   const half = size / 2;
   const r = 4;
 
-  let fill = zoneColor ?? "#E7E5E4";
-  let stroke = zoneColor ? "#1E1B4B" : "#78716C";
+  let fill = zoneColor ?? "var(--color-line)";
+  let stroke = zoneColor ? "var(--color-ink)" : "var(--color-muted)";
   let strokeWidth = 1.25;
   let strokeDasharray: string | undefined = zoneColor ? undefined : "3 2";
   let icon: "check" | "cross" | null = null;
   let opacity = 1;
 
   if (isRemoved) {
-    fill = "#F5F5F4";
-    stroke = "#A8A29E";
+    fill = "var(--color-seat-void)";
+    stroke = "var(--color-seat-void-edge)";
     strokeDasharray = "3 2";
     opacity = 0.45;
   } else if (mode === "view" && status === "CHECKED_IN") {
-    fill = "#16A34A";
-    stroke = "#14532D";
+    fill = "var(--color-seat-checked)";
+    stroke = "var(--color-seat-checked-edge)";
     strokeDasharray = undefined;
     icon = "check";
   } else if (status === "SOLD") {
-    fill = "#9CA3AF";
-    stroke = "#4B5563";
+    fill = "var(--color-seat-sold)";
+    stroke = "var(--color-seat-sold-edge)";
     strokeDasharray = undefined;
     icon = "cross";
   } else if (status === "HELD") {
     fill = `url(#${heldPatternId})`;
-    stroke = "#B45309";
+    stroke = "var(--color-seat-held-edge)";
     strokeDasharray = undefined;
   } else if (isSelected) {
-    fill = "#3730A3";
-    stroke = "#1E1B4B";
+    fill = "var(--color-ink)";
+    stroke = "var(--color-ink)";
     strokeWidth = 2.5;
     strokeDasharray = undefined;
     icon = "check";
@@ -136,7 +136,7 @@ const SeatNode = memo(function SeatNode({
           height={size + 6}
           rx={r + 2}
           fill="none"
-          stroke="#3730A3"
+          stroke="var(--color-ink)"
           strokeWidth={2}
         />
       )}
@@ -167,7 +167,7 @@ const SeatNode = memo(function SeatNode({
         <path
           d="M -4.5 0.5 L -1.5 3.5 L 5 -3.5"
           fill="none"
-          stroke="#FFFFFF"
+          stroke="var(--color-card)"
           strokeWidth={2.2}
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -176,7 +176,7 @@ const SeatNode = memo(function SeatNode({
         <path
           d="M -4 -4 L 4 4 M 4 -4 L -4 4"
           fill="none"
-          stroke="#FFFFFF"
+          stroke="var(--color-card)"
           strokeWidth={2}
           strokeLinecap="round"
         />
@@ -188,7 +188,7 @@ const SeatNode = memo(function SeatNode({
           dominantBaseline="central"
           fontSize={7.5}
           fontWeight={700}
-          fill={zoneColor ? "#FFFFFF" : "#44403C"}
+          fill={zoneColor ? "var(--color-card)" : "var(--color-ink)"}
           style={{ pointerEvents: "none", userSelect: "none" }}
         >
           {shortNumber}
@@ -365,25 +365,25 @@ export function SeatMap({
     <div className={`flex flex-col gap-3 ${className}`}>
       {showLegend && <SeatLegend zones={zones} mode={mode} />}
 
-      <div className="relative overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-xs">
+      <div className="relative overflow-hidden rounded-card border border-line bg-card">
         {/* Kontrol zoom */}
-        <div className="absolute top-3 right-3 z-10 flex items-center gap-1 rounded-xl border border-stone-200 bg-white/95 p-1 shadow-sm backdrop-blur-xs">
+        <div className="absolute top-3 right-3 z-10 flex items-center gap-1 rounded-input border border-line bg-card/95 p-1 backdrop-blur-xs">
           <button
             type="button"
             onClick={() => setZoom((z) => clampZoom(z * 1.25))}
             aria-label="Perbesar denah"
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-stone-700 hover:bg-stone-100"
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-ink hover:bg-page"
           >
             <ZoomIn className="h-4 w-4" />
           </button>
-          <span className="min-w-11 text-center font-mono text-xs font-semibold text-stone-700">
+          <span className="min-w-11 text-center text-xs font-semibold text-ink">
             {Math.round(zoom * 100)}%
           </span>
           <button
             type="button"
             onClick={() => setZoom((z) => clampZoom(z / 1.25))}
             aria-label="Perkecil denah"
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-stone-700 hover:bg-stone-100"
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-ink hover:bg-page"
           >
             <ZoomOut className="h-4 w-4" />
           </button>
@@ -391,19 +391,19 @@ export function SeatMap({
             type="button"
             onClick={resetView}
             aria-label="Reset posisi denah"
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-stone-700 hover:bg-stone-100"
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-ink hover:bg-page"
           >
             <RotateCcw className="h-3.5 w-3.5" />
           </button>
         </div>
 
-        <div className="pointer-events-none absolute top-3 left-3 z-10 rounded-lg bg-stone-900/75 px-2.5 py-1 text-[11px] font-medium text-white backdrop-blur-xs">
+        <div className="pointer-events-none absolute top-3 left-3 z-10 rounded-full bg-ink/85 px-3 py-1 text-xs font-medium text-white backdrop-blur-xs">
           Geser & cubit untuk zoom • Ketuk kursi untuk detail
         </div>
 
         <svg
           viewBox={`0 0 ${width} ${height}`}
-          className="h-[380px] w-full touch-none select-none bg-[#FAFAF7] sm:h-[480px]"
+          className="h-[380px] w-full touch-none select-none bg-page sm:h-[480px]"
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
@@ -421,8 +421,15 @@ export function SeatMap({
               patternUnits="userSpaceOnUse"
               patternTransform="rotate(45)"
             >
-              <rect width="6" height="6" fill="#F59E0B" />
-              <line x1="0" y1="0" x2="0" y2="6" stroke="#78350F" strokeWidth="2.2" />
+              <rect width="6" height="6" fill="var(--color-seat-held)" />
+              <line
+                x1="0"
+                y1="0"
+                x2="0"
+                y2="6"
+                stroke="var(--color-seat-held-stripe)"
+                strokeWidth="2.2"
+              />
             </pattern>
           </defs>
 
@@ -438,8 +445,8 @@ export function SeatMap({
                     cy={layout.stage.y + layout.stage.h / 2}
                     rx={layout.stage.w / 2}
                     ry={layout.stage.h / 2}
-                    fill="#1E1B4B"
-                    stroke="#3730A3"
+                    fill="var(--color-ink)"
+                    stroke="var(--color-gate)"
                     strokeWidth={3}
                   />
                 ) : (
@@ -449,8 +456,8 @@ export function SeatMap({
                     width={layout.stage.w}
                     height={layout.stage.h}
                     rx={12}
-                    fill="#1E1B4B"
-                    stroke="#3730A3"
+                    fill="var(--color-ink)"
+                    stroke="var(--color-gate)"
                     strokeWidth={3}
                   />
                 )}
@@ -459,7 +466,7 @@ export function SeatMap({
                   y={layout.stage.y + layout.stage.h / 2}
                   textAnchor="middle"
                   dominantBaseline="central"
-                  fill="#FFFFFF"
+                  fill="var(--color-card)"
                   fontSize={13}
                   fontWeight={700}
                   letterSpacing={2}
@@ -476,7 +483,7 @@ export function SeatMap({
                 x={lbl.x}
                 y={lbl.y}
                 textAnchor="middle"
-                fill="#57534E"
+                fill="var(--color-muted)"
                 fontSize={11}
                 fontWeight={600}
               >
@@ -492,7 +499,7 @@ export function SeatMap({
                   y={m.y}
                   textAnchor="middle"
                   dominantBaseline="central"
-                  fill="#57534E"
+                  fill="var(--color-muted)"
                   fontSize={10}
                   fontWeight={700}
                 >
@@ -503,7 +510,7 @@ export function SeatMap({
                   y={m.y}
                   textAnchor="middle"
                   dominantBaseline="central"
-                  fill="#57534E"
+                  fill="var(--color-muted)"
                   fontSize={10}
                   fontWeight={700}
                 >

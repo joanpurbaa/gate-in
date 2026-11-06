@@ -1,5 +1,6 @@
-import { Calendar, Sparkles } from "lucide-react";
+import { Calendar } from "lucide-react";
 import { EventCard, type EventCardData } from "@/components/ui/EventCard";
+import { SectionHeader } from "@/components/ui/SectionHeader";
 import { computeSaleState } from "@/components/ui/StatusPill";
 import { prisma } from "@/lib/db";
 
@@ -52,38 +53,22 @@ export default async function HomePage() {
   });
 
   return (
-    <main className="mx-auto max-w-5xl px-4 py-6 sm:py-10">
-      <section className="mb-8 rounded-2xl border border-stone-200 bg-white p-5 shadow-xs sm:p-7">
-        <div className="inline-flex items-center gap-1.5 rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1 text-xs font-semibold text-[#3730A3]">
-          <Sparkles className="h-3.5 w-3.5" />
-          <span>Summarecon Mall Bandung • Pemilihan Kursi 1:1</span>
-        </div>
-        <h1 className="mt-3 text-2xl font-bold tracking-tight text-stone-900 sm:text-3xl">
-          Pilih Kursi Anda dengan Pasti Sebelum Membeli Tiket
-        </h1>
-        <p className="mt-2 max-w-2xl text-xs leading-relaxed text-stone-600 sm:text-sm">
-          Lihat denah ruangan sesuai susunan aslinya, pantau ketersediaan kursi secara langsung,
-          dan terima e-ticket ber-QR code ke ponsel serta WhatsApp Anda.
-        </p>
-      </section>
-
+    <main className="mx-auto max-w-[1200px] px-4 py-6 sm:py-10">
       <section>
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-base font-bold text-stone-900 sm:text-lg">
-            Acara Mendatang ({cards.length})
-          </h2>
-        </div>
+        <SectionHeader
+          title="Sedang ramai di Bandung"
+          subtitle="Pilih acara di Summarecon Mall Bandung dan tentukan kursimu langsung dari denah ruangan."
+        />
 
         {cards.length === 0 ? (
-          <div className="rounded-2xl border border-stone-200 bg-white p-10 text-center">
-            <Calendar className="mx-auto h-8 w-8 text-stone-400" />
-            <h3 className="mt-3 text-sm font-bold text-stone-900">Belum Ada Acara Dipublikasikan</h3>
-            <p className="mt-1 text-xs text-stone-600">
-              Acara baru akan segera tampil di halaman ini setelah dipublikasikan oleh panitia.
+          <div className="rounded-card border border-line bg-card p-10 text-center">
+            <Calendar className="mx-auto h-8 w-8 text-muted" />
+            <p className="mt-3 text-sm font-medium text-ink">
+              Belum ada acara yang cocok. Coba kata lain atau pilih Semua.
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {cards.map((ev) => (
               <EventCard key={ev.slug} event={ev} />
             ))}

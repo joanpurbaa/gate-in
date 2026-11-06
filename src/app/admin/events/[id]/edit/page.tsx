@@ -44,7 +44,7 @@ export default async function EditEventPage({
   const hasNonAvailable = event.seats.some((s) => s.status !== "AVAILABLE");
 
   return (
-    <div className="min-h-screen bg-[#FAFAF7]">
+    <div className="min-h-screen bg-page">
       <AdminHeader organizerName={session.name} organizerEmail={session.email} />
       <EventWizardClient
         initial={{

@@ -66,7 +66,7 @@ export default async function AdminCheckinPage({
   const parsedLayout = event.layout ? parseLayout(event.layout) : null;
 
   return (
-    <div className="min-h-screen bg-[#FAFAF7]">
+    <div className="min-h-screen bg-page">
       <AdminHeader organizerName={session.name} organizerEmail={session.email} />
       <CheckinScannerClient
         event={{

@@ -63,13 +63,8 @@ export function SimulatePaymentClient({ order }: SimulatePaymentClientProps) {
         return;
       }
 
-      if (outcome === "SUCCESS") {
-        router.push(`/pesanan/${order.id}`);
-        router.refresh();
-      } else {
-        router.push(`/pesanan/${order.id}`);
-        router.refresh();
-      }
+      router.push(`/pesanan/${order.id}`);
+      router.refresh();
     } catch {
       setErrorMessage("Gagal menghubungi server. Coba lagi.");
       setSubmitting(null);
@@ -84,35 +79,35 @@ export function SimulatePaymentClient({ order }: SimulatePaymentClientProps) {
           onExpire={() => setIsExpired(true)}
         />
 
-        {/* Pita informasi simulasi */}
-        <div className="flex items-start gap-2.5 rounded-xl border border-indigo-200 bg-indigo-50/90 p-3.5 text-xs text-indigo-950">
-          <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-[#3730A3]" />
+        {/* Label mode simulasi yang netral */}
+        <div className="flex items-start gap-2.5 rounded-input border border-line bg-card p-3.5 text-xs text-muted">
+          <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-gate" />
           <div>
-            <strong className="font-bold">Mode Pembayaran Simulasi (Sandbox Prototype)</strong>
-            <p className="mt-0.5 text-indigo-900/80">
-              Tidak memerlukan data kartu atau rekening asli. Gunakan tombol di bawah untuk menguji
-              skenario pembayaran berhasil maupun gagal/batal.
+            <strong className="font-semibold text-ink">Mode simulasi</strong>
+            <p className="mt-0.5">
+              Tidak memerlukan data kartu atau rekening asli. Gunakan tombol di bawah untuk
+              mensimulasikan hasil pembayaran.
             </p>
           </div>
         </div>
 
-        <div className="rounded-2xl border border-stone-200 bg-white p-5 shadow-xs sm:p-6">
+        <div className="rounded-card border border-line bg-card p-5 sm:p-6">
           <div className="flex items-center justify-between gap-2">
-            <h1 className="text-lg font-bold text-stone-900">Konfirmasi Pembayaran</h1>
-            <span className="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-0.5 font-mono text-[11px] font-semibold text-amber-900">
-              PENDING
+            <h1 className="font-display text-lg font-bold text-ink">Konfirmasi pembayaran</h1>
+            <span className="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-0.5 text-xs font-semibold text-amber-900">
+              Menunggu
             </span>
           </div>
 
-          <div className="mt-3 rounded-xl border border-stone-200 bg-[#FAFAF7] p-3.5">
-            <div className="text-sm font-bold text-stone-900">{order.event.name}</div>
-            <div className="mt-1 flex flex-wrap items-center gap-3 text-xs text-stone-600">
+          <div className="mt-3 rounded-input border border-line bg-page p-3.5">
+            <div className="font-display text-sm font-bold text-ink">{order.event.name}</div>
+            <div className="mt-1 flex flex-wrap items-center gap-3 text-xs text-muted">
               <span className="inline-flex items-center gap-1">
-                <Calendar className="h-3.5 w-3.5 text-[#3730A3]" />
+                <Calendar className="h-3.5 w-3.5 text-gate" />
                 {formatDateTime(order.event.startsAt)}
               </span>
               <span className="inline-flex items-center gap-1">
-                <MapPin className="h-3.5 w-3.5 text-[#3730A3]" />
+                <MapPin className="h-3.5 w-3.5 text-gate" />
                 {order.event.venueName}
               </span>
             </div>
@@ -120,50 +115,50 @@ export function SimulatePaymentClient({ order }: SimulatePaymentClientProps) {
 
           <dl className="mt-4 space-y-2 text-xs">
             <div className="flex justify-between">
-              <dt className="text-stone-500">ID Pesanan</dt>
-              <dd className="font-mono font-semibold text-stone-800">{order.id}</dd>
+              <dt className="text-muted">ID pesanan</dt>
+              <dd className="font-mono font-semibold text-ink">{order.id}</dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-stone-500">Pemesan</dt>
-              <dd className="font-semibold text-stone-900">{order.buyerName}</dd>
+              <dt className="text-muted">Pemesan</dt>
+              <dd className="font-semibold text-ink">{order.buyerName}</dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-stone-500">WhatsApp Penerima Tiket</dt>
-              <dd className="font-mono font-semibold text-stone-900">{order.buyerPhone}</dd>
+              <dt className="text-muted">WhatsApp penerima tiket</dt>
+              <dd className="font-mono font-semibold text-ink">{order.buyerPhone}</dd>
             </div>
           </dl>
 
-          <div className="mt-4 border-t border-stone-200 pt-3.5">
-            <div className="text-xs font-semibold text-stone-700">
-              Rincian Kursi ({order.seats.length})
+          <div className="mt-4 border-t border-line pt-3.5">
+            <div className="text-xs font-semibold text-ink">
+              Rincian kursi ({order.seats.length})
             </div>
             <ul className="mt-2 space-y-2">
               {order.seats.map((s) => (
                 <li
                   key={s.label}
-                  className="flex items-center justify-between rounded-xl border border-stone-200 bg-stone-50 px-3.5 py-2 text-xs"
+                  className="flex items-center justify-between rounded-input border border-line bg-page px-3.5 py-2 text-xs"
                 >
                   <div className="flex items-center gap-2">
                     <span
                       className="h-2.5 w-2.5 rounded-xs"
                       style={{ backgroundColor: s.zoneColor }}
                     />
-                    <span className="font-mono font-bold text-stone-900">Kursi {s.label}</span>
-                    <span className="text-stone-600">• {s.zoneName}</span>
+                    <span className="font-display font-bold text-ink">Kursi {s.label}</span>
+                    <span className="text-muted">• {s.zoneName}</span>
                   </div>
-                  <span className="font-semibold text-stone-900">{formatRupiah(s.price)}</span>
+                  <span className="font-semibold text-ink">{formatRupiah(s.price)}</span>
                 </li>
               ))}
             </ul>
 
-            <div className="mt-3.5 flex items-center justify-between border-t border-stone-200 pt-3.5 text-base font-bold text-stone-900">
-              <span>Total Tagihan</span>
-              <span className="text-[#3730A3]">{formatRupiah(order.totalAmount)}</span>
+            <div className="mt-3.5 flex items-center justify-between border-t border-line pt-3.5 font-display text-base font-extrabold text-ink">
+              <span>Total tagihan</span>
+              <span className="text-gate">{formatRupiah(order.totalAmount)}</span>
             </div>
           </div>
 
           {errorMessage && (
-            <div className="mt-4 flex items-start gap-2 rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs font-medium text-rose-900">
+            <div className="mt-4 flex items-start gap-2 rounded-input border border-rose-200 bg-rose-50 p-3 text-xs font-medium text-rose-900">
               <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-rose-600" />
               <div>
                 <p>{errorMessage}</p>
@@ -171,7 +166,7 @@ export function SimulatePaymentClient({ order }: SimulatePaymentClientProps) {
                   href={`/e/${order.event.slug}/beli`}
                   className="mt-1.5 inline-block font-bold underline"
                 >
-                  Kembali Pilih Kursi di Denah
+                  Pilih kursi
                 </Link>
               </div>
             </div>
@@ -182,13 +177,13 @@ export function SimulatePaymentClient({ order }: SimulatePaymentClientProps) {
               type="button"
               disabled={submitting !== null || isExpired}
               onClick={() => handleSimulate("SUCCESS")}
-              className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#3730A3] px-5 py-3 text-sm font-semibold text-white shadow-xs transition hover:bg-indigo-900 disabled:cursor-not-allowed disabled:bg-stone-300 disabled:text-stone-500"
+              className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-button bg-gate px-5 py-3 text-sm font-semibold text-white transition hover:bg-gate-strong disabled:cursor-not-allowed disabled:bg-line disabled:text-muted"
             >
               <CheckCircle2 className="h-4 w-4" />
               <span>
                 {submitting === "SUCCESS"
-                  ? "Mengonfirmasi Tiket & Mengirim WhatsApp..."
-                  : "Simulasikan Pembayaran Berhasil"}
+                  ? "Mengonfirmasi tiket & mengirim WhatsApp..."
+                  : "Simulasikan pembayaran berhasil"}
               </span>
             </button>
 
@@ -196,23 +191,23 @@ export function SimulatePaymentClient({ order }: SimulatePaymentClientProps) {
               type="button"
               disabled={submitting !== null}
               onClick={() => handleSimulate("FAILED")}
-              className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border border-rose-300 bg-rose-50/70 px-5 py-3 text-xs font-semibold text-rose-900 transition hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-button border border-rose-300 bg-rose-50/70 px-5 py-3 text-xs font-semibold text-rose-900 transition hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-60"
             >
               <XCircle className="h-4 w-4 text-rose-600" />
               <span>
                 {submitting === "FAILED"
-                  ? "Melepas Kursi..."
-                  : "Simulasikan Pembayaran Gagal (Lepas Kursi)"}
+                  ? "Melepas kursi..."
+                  : "Simulasikan pembayaran gagal"}
               </span>
             </button>
 
             {isExpired && (
               <Link
                 href={`/e/${order.event.slug}/beli`}
-                className="inline-flex min-h-11 w-full items-center justify-center gap-1.5 rounded-xl border border-stone-300 bg-white px-4 py-2.5 text-xs font-semibold text-stone-800 hover:bg-stone-50"
+                className="inline-flex min-h-11 w-full items-center justify-center gap-1.5 rounded-button border border-line bg-card px-4 py-2.5 text-xs font-semibold text-ink hover:bg-page"
               >
                 <ArrowLeft className="h-4 w-4" />
-                <span>Kembali ke Denah Acara</span>
+                <span>Pilih kursi</span>
               </Link>
             )}
           </div>
