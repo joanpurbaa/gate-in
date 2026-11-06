@@ -54,7 +54,7 @@ Agent: centang `[x]` setelah tahap lulus `lint` + `build` + verifikasi di `docs/
     - `OrganizerBand`: band ajakan penyelenggara berlatar Tinta.
   - Wizard Admin: langkah 1 dilengkapi pilihan Kategori, isian Nama Penyelenggara publik, dan validasi nama acara wajib diisi.
   - Tangkapan layar tersimpan di `docs/screenshots/after-11/` (scrollWidth 390px dan 1440px tanpa overflow horizontal).
-  - Status berkas poster: direktori `public/posters/` belum ada berkas asli, sehingga seluruh 8 acara secara mulus menggunakan `PosterFallback`.
+  - Status berkas poster: seluruh 8 poster WebP resmi 16:9 (1600x900) telah dibuat via generator ilustrasi sesuai panduan `docs/ASSETS.md` dan disimpan di `public/posters/` (ukuran optimal 32–103 KB). Seluruh 404 pada gambar poster telah teratasi penuh.
 - **Tahap 10 (Fondasi Visual)**:
   - Token warna, tiered radius (`20px` kartu, `14px` tombol, `12px` input), dan skala tipografi (12–56px) diterapkan di `src/app/globals.css` dan diekspos ke TS di `src/lib/design-tokens.ts`. Semua token indigo lama digantikan Gerbang (`#E14D2A`), Batu (`#1C1917`), Tinta (`#0F172A`), dll.
   - Font Bricolage Grotesque (700, 800) dan Figtree (400, 500, 600) dimuat via `next/font/google`.
