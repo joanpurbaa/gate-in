@@ -147,9 +147,8 @@ Agent: centang `[x]` setelah tahap lulus `lint` + `build` + verifikasi di `docs/
     - `confirmOrderSold` memvalidasi `holdExpiresAt` terhadap waktu server. Pembayaran yang tiba setelah kedaluwarsa secara atomik ditolak (`ORDER_EXPIRED`), status disimpan ke database, dan kursi dilepas kembali ke denah.
     - Idempotent: Order yang sudah `PAID` dijamin tidak dapat di-expire.
   - **Job Processing & Deployment**:
-    - `vercel.json` dikonfigurasi dengan Vercel Cron untuk menjalankan `/api/cron/expire-orders` setiap menit.
-    - `/api/cron/expire-orders` mendukung otentikasi via `CRON_SECRET` Vercel.
-    - Polling denah `/api/events/[slug]/seats` mengeksekusi lazy/opportunistic background recovery non-blocking, menjamin pembersihan bahkan sebelum cron periodik berjalan.
+    - Cron Vercel dihapus dari `vercel.json` untuk menghindari batasan limited cron pada Vercel Hobby tier.
+    - Pemulihan pesanan kedaluwarsa sepenuhnya berbasis lazy/opportunistic background recovery saat polling `/api/events/[slug]/seats` dan validasi atomik saat `SELECT ... FOR UPDATE` di database (tanpa ketergantungan cron job background).
   - **Notifikasi Pembeli & Waiting List Hook**:
     - Notifikasi WhatsApp otomatis dikirim via Fonnte (`sendOrderExpiredWhatsApp`), non-blocking dan dilindungi `expiredNotifiedAt` agar tidak ada notifikasi berulang.
     - Modul event internal `src/lib/events/seat-events.ts` memancarkan `dispatchSeatsReleased` untuk integrasi modul waiting list di masa mendatang tanpa alokasi sepihak.
