@@ -18,6 +18,8 @@ export default async function NewEventPage() {
       <EventWizardClient
         initial={{
           name: "",
+          organizerName: session.name,
+          category: "COMMUNITY",
           description: "",
           posterUrl: null,
           venueName: "Summarecon Mall Bandung",

@@ -39,6 +39,15 @@ enum WaStatus {
   SKIPPED
 }
 
+enum EventCategory {
+  MUSIC
+  TECH
+  ARTS
+  EDUCATION
+  COMMUNITY
+  SPORTS
+}
+
 model Organizer {
   id           String   @id @default(cuid())
   email        String   @unique
@@ -66,12 +75,15 @@ model Event {
   maxSeatsPerOrder Int         @default(5)
   contactInfo      String?
   policyNote       String?
-  status           EventStatus @default(DRAFT)
+  organizerName    String?
+  category         EventCategory @default(COMMUNITY)
+  isFeatured       Boolean       @default(false)
+  status           EventStatus   @default(DRAFT)
   /// LayoutV1 (lihat docs/SEAT_LAYOUT_SPEC.md). Null = layout belum dibuat.
   layout           Json?
-  layoutLocked     Boolean     @default(false)
-  createdAt        DateTime    @default(now())
-  updatedAt        DateTime    @updatedAt
+  layoutLocked     Boolean       @default(false)
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
 
   zones   Zone[]
   seats   Seat[]
@@ -80,6 +92,8 @@ model Event {
 
   @@index([organizerId])
   @@index([status])
+  @@index([category])
+  @@index([isFeatured])
 }
 
 model Zone {

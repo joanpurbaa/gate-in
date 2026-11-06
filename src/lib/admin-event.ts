@@ -22,6 +22,8 @@ export const eventPayloadSchema = z.object({
     .optional(),
   description: z.string().trim().max(4000).default(""),
   posterUrl: z.string().trim().url("URL poster tidak valid").nullable().optional(),
+  category: z.enum(["MUSIC", "TECH", "ARTS", "EDUCATION", "COMMUNITY", "SPORTS"]).default("COMMUNITY"),
+  organizerName: z.string().trim().max(100).nullable().optional(),
   venueName: z.string().trim().min(2, "Nama tempat wajib diisi").max(160),
   venueAddress: z.string().trim().max(240).nullable().optional(),
   startsAt: z.string().datetime({ message: "Tanggal & jam mulai tidak valid" }),

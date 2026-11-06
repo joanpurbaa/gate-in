@@ -62,6 +62,8 @@ export async function PUT(
       where: { id: existing.id },
       data: {
         name: input.name,
+        category: input.category,
+        organizerName: input.organizerName ?? null,
         description: input.description,
         posterUrl: input.posterUrl ?? null,
         venueName: input.venueName,

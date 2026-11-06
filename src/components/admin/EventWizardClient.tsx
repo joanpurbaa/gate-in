@@ -38,6 +38,8 @@ export interface EventWizardInitialData {
   id?: string;
   name: string;
   slug?: string;
+  organizerName?: string | null;
+  category?: "MUSIC" | "TECH" | "ARTS" | "EDUCATION" | "COMMUNITY" | "SPORTS";
   description: string;
   posterUrl: string | null;
   venueName: string;
@@ -109,6 +111,11 @@ export function EventWizardClient({ initial }: { initial: EventWizardInitialData
 
   // Langkah 1: Info Dasar
   const [name, setName] = useState(initial.name);
+  const [organizerName, setOrganizerName] = useState(initial.organizerName ?? "");
+  const [category, setCategory] = useState<
+    "MUSIC" | "TECH" | "ARTS" | "EDUCATION" | "COMMUNITY" | "SPORTS"
+  >(initial.category ?? "COMMUNITY");
+  const [nameError, setNameError] = useState<string | null>(null);
   const [description, setDescription] = useState(initial.description);
   const [posterUrl, setPosterUrl] = useState(initial.posterUrl ?? "");
   const [uploadingPoster, setUploadingPoster] = useState(false);
@@ -495,6 +502,8 @@ export function EventWizardClient({ initial }: { initial: EventWizardInitialData
     try {
       const payload = {
         name: name.trim(),
+        organizerName: organizerName.trim() || null,
+        category,
         description: description.trim(),
         posterUrl: posterUrl.trim() ? posterUrl.trim() : null,
         venueName: venueName.trim(),
@@ -612,10 +621,57 @@ export function EventWizardClient({ initial }: { initial: EventWizardInitialData
                 type="text"
                 required
                 value={name}
-                onChange={(e) => setName(e.target.value)}
+                onChange={(e) => {
+                  setName(e.target.value);
+                  if (nameError) setNameError(null);
+                }}
                 placeholder="Contoh: Bandung Tech Summit 2026"
-                className="mt-1 min-h-11 w-full rounded-xl border border-line px-3.5 py-2 text-sm"
+                className={`mt-1 min-h-11 w-full rounded-xl border px-3.5 py-2 text-sm focus:outline-none ${
+                  nameError ? "border-danger focus:border-danger" : "border-line focus:border-gate"
+                }`}
               />
+              {nameError && (
+                <p className="mt-1.5 flex items-center gap-1.5 text-xs font-semibold text-danger">
+                  <AlertCircle className="h-3.5 w-3.5" />
+                  <span>{nameError}</span>
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-ink">Kategori Acara *</label>
+              <select
+                value={category}
+                onChange={(e) =>
+                  setCategory(
+                    e.target.value as "MUSIC" | "TECH" | "ARTS" | "EDUCATION" | "COMMUNITY" | "SPORTS"
+                  )
+                }
+                className="mt-1 min-h-11 w-full rounded-xl border border-line bg-white px-3.5 py-2 text-sm text-ink focus:border-gate focus:outline-none"
+              >
+                <option value="COMMUNITY">Komunitas dan gaya hidup</option>
+                <option value="TECH">Teknologi dan bisnis</option>
+                <option value="MUSIC">Musik</option>
+                <option value="ARTS">Seni dan hiburan</option>
+                <option value="EDUCATION">Pendidikan dan workshop</option>
+                <option value="SPORTS">Olahraga</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-ink">
+                Nama Penyelenggara Tampil
+              </label>
+              <input
+                type="text"
+                value={organizerName}
+                onChange={(e) => setOrganizerName(e.target.value)}
+                placeholder="Contoh: Senja Sessions (opsional)"
+                className="mt-1 min-h-11 w-full rounded-xl border border-line px-3.5 py-2 text-sm focus:border-gate focus:outline-none"
+              />
+              <span className="mt-1 block text-[11px] text-muted">
+                Nama yang tampil ke pengunjung. Bila kosong, memakai nama akun penyelenggara.
+              </span>
             </div>
 
             <div className="sm:col-span-2">
@@ -789,7 +845,15 @@ export function EventWizardClient({ initial }: { initial: EventWizardInitialData
           <div className="mt-6 flex justify-end">
             <button
               type="button"
-              onClick={() => setStep(2)}
+              onClick={() => {
+                if (!name.trim()) {
+                  setNameError("Nama acara wajib diisi sebelum melanjutkan.");
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                  return;
+                }
+                setNameError(null);
+                setStep(2);
+              }}
               className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-gate px-5 py-2.5 text-xs font-semibold text-white hover:bg-gate-strong"
             >
               <span>Lanjut ke Layout Kursi</span>

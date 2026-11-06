@@ -52,6 +52,8 @@ export async function POST(req: NextRequest) {
         organizerId: session.organizerId,
         slug,
         name: input.name,
+        category: input.category,
+        organizerName: input.organizerName ?? null,
         description: input.description,
         posterUrl: input.posterUrl ?? null,
         venueName: input.venueName,

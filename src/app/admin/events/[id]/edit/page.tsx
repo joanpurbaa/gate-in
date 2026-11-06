@@ -51,6 +51,8 @@ export default async function EditEventPage({
           id: event.id,
           name: event.name,
           slug: event.slug,
+          organizerName: event.organizerName || session.name,
+          category: event.category,
           description: event.description,
           posterUrl: event.posterUrl,
           venueName: event.venueName,
