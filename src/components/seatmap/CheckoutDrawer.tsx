@@ -205,7 +205,6 @@ export function CheckoutDrawer({
                     id="checkout-buyer-name"
                     type="text"
                     required
-                    autoFocus
                     disabled={isSubmitting}
                     placeholder="Contoh: Budi Santoso"
                     value={buyerName}
