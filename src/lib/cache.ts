@@ -1,4 +1,3 @@
-import { unstable_cache, revalidateTag, revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { computeSaleState } from "@/components/ui/StatusPill";
 import type { EventCardData } from "@/components/ui/EventCard";
@@ -15,13 +14,35 @@ export interface CachedMarketplacePayload {
   explainerData: ExplainerBandProps | null;
 }
 
+interface CacheItem<T> {
+  data: T;
+  expiresAt: number;
+}
+
+// In-memory cache manual di Next.js (tanpa Redis)
+const cacheStore = new Map<string, CacheItem<unknown>>();
+
+async function getOrSetCache<T>(
+  key: string,
+  ttlSeconds: number,
+  fetcher: () => Promise<T>
+): Promise<T> {
+  const now = Date.now();
+  const cached = cacheStore.get(key);
+  if (cached && cached.expiresAt > now) {
+    return cached.data as T;
+  }
+  const data = await fetcher();
+  cacheStore.set(key, { data, expiresAt: now + ttlSeconds * 1000 });
+  return data;
+}
+
 /**
- * Caching native Next.js untuk data beranda marketplace acara.
+ * Caching data beranda marketplace acara (TTL 60 detik).
  * Mengurangi beban database Neon pada akses pembeli berulang.
- * Revalidasi otomatis setiap 60 detik atau instan saat ada pembaruan acara.
  */
-export const getCachedMarketplaceData = unstable_cache(
-  async (): Promise<CachedMarketplacePayload> => {
+export async function getCachedMarketplaceData(): Promise<CachedMarketplacePayload> {
+  return getOrSetCache("marketplace_feed", 60, async () => {
     const now = new Date();
 
     // 1. Ambil seluruh acara PUBLISHED beserta zonanya
@@ -153,21 +174,15 @@ export const getCachedMarketplaceData = unstable_cache(
       totalSoldTicketsCount,
       explainerData,
     };
-  },
-  ["marketplace-events-feed-v1"],
-  {
-    revalidate: 60, // 60 detik cache
-    tags: ["events", "marketplace"],
-  }
-);
+  });
+}
 
 /**
- * Caching native Next.js untuk data detail acara publik.
- * Memuat metadata acara, zona, dan denah kursi awal dengan TTL 30 detik.
+ * Caching data detail acara publik (TTL 30 detik).
  */
-export const getCachedEventDetail = unstable_cache(
-  async (slug: string) => {
-    const event = await prisma.event.findUnique({
+export async function getCachedEventDetail(slug: string) {
+  return getOrSetCache(`event_detail_${slug}`, 30, async () => {
+    return prisma.event.findUnique({
       where: { slug },
       include: {
         organizer: { select: { name: true } },
@@ -188,26 +203,12 @@ export const getCachedEventDetail = unstable_cache(
         },
       },
     });
-
-    return event;
-  },
-  ["event-detail-cache-v1"],
-  {
-    revalidate: 30, // 30 detik cache
-    tags: ["events"],
-  }
-);
+  });
+}
 
 /**
- * Pemicu revalidasi cache manual Next.js.
- * Dipanggil ketika ada acara baru, pembaruan layout, atau publikasi acara.
+ * Pemicu revalidasi cache manual saat ada acara baru, pembaruan layout, atau publikasi acara.
  */
 export async function revalidateEventsCache() {
-  try {
-    revalidateTag("events", { expire: 0 });
-    revalidateTag("marketplace", { expire: 0 });
-    revalidatePath("/", "page");
-  } catch (err) {
-    console.warn("[revalidateEventsCache] Gagal merevalidasi tag:", err);
-  }
+  cacheStore.clear();
 }

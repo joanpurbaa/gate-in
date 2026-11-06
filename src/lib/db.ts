@@ -22,23 +22,20 @@ function createClient() {
 
 const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
 
-function getPrismaInstance(): PrismaClient {
-  const existing = globalForPrisma.prisma;
-  if (
-    existing &&
-    !("promoUsage" in existing && "waitingListEntry" in existing && "promotion" in existing)
-  ) {
-    const fresh = createClient();
-    globalForPrisma.prisma = fresh;
-    return fresh;
+function getPrismaClient(): PrismaClient {
+  if (globalForPrisma.prisma) {
+    if (
+      process.env.NODE_ENV !== "production" &&
+      !("promoUsage" in globalForPrisma.prisma && "waitingListEntry" in globalForPrisma.prisma)
+    ) {
+      globalForPrisma.prisma = createClient();
+    }
+    return globalForPrisma.prisma;
   }
-  if (!existing) {
-    const fresh = createClient();
-    if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = fresh;
-    return fresh;
-  }
-  return existing;
+  const client = createClient();
+  globalForPrisma.prisma = client;
+  return client;
 }
 
 /** Satu instance Prisma, aman untuk hot reload dev dan serverless. */
-export const prisma = getPrismaInstance();
+export const prisma = getPrismaClient();
