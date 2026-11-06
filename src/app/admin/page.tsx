@@ -8,6 +8,7 @@ import {
   Plus,
   QrCode,
   Sparkles,
+  Tag,
 } from "lucide-react";
 import { AdminHeader } from "@/components/admin/AdminHeader";
 import { StatCard } from "@/components/ui/StatCard";
@@ -94,6 +95,13 @@ export default async function AdminDashboardPage() {
             >
               <BarChart3 className="h-4 w-4 text-gate" />
               <span>Analitik Penjualan</span>
+            </Link>
+            <Link
+              href="/admin/promos"
+              className="inline-flex min-h-12 items-center gap-2 rounded-button border border-line bg-card px-4 py-2.5 text-xs font-semibold text-ink transition hover:bg-page sm:min-h-11"
+            >
+              <Tag className="h-4 w-4 text-gate" />
+              <span>Kode Promo</span>
             </Link>
             <Link
               href="/admin/events/new"

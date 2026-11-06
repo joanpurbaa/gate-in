@@ -14,6 +14,7 @@ const createOrderSchema = z.object({
     .min(1, "Pilih minimal 1 kursi")
     .max(10, "Terlalu banyak kursi dipilih"),
   offerToken: z.string().trim().min(10).optional(),
+  promoCode: z.string().trim().min(1).max(30).optional(),
 });
 
 export async function POST(req: NextRequest) {
@@ -136,6 +137,7 @@ export async function POST(req: NextRequest) {
       seatLabels: uniqueLabels,
       buyerName,
       buyerPhone: phone62,
+      promoCode: parsed.data.promoCode,
     });
 
     if (offerToken) {
@@ -147,6 +149,9 @@ export async function POST(req: NextRequest) {
         orderId: held.orderId,
         holdExpiresAt: held.holdExpiresAt.toISOString(),
         totalAmount: held.totalAmount,
+        originalAmount: held.originalAmount,
+        discountAmount: held.discountAmount,
+        promoCode: held.promoCode,
         seats: held.seats,
       },
       { status: 201 }

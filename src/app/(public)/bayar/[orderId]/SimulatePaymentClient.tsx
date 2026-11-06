@@ -10,6 +10,7 @@ import {
   CheckCircle2,
   MapPin,
   ShieldCheck,
+  Tag,
   XCircle,
 } from "lucide-react";
 import { CountdownBar } from "@/components/seatmap/CountdownBar";
@@ -22,6 +23,9 @@ interface SimulatePaymentClientProps {
     buyerName: string;
     buyerPhone: string;
     totalAmount: number;
+    originalAmount: number;
+    discountAmount: number;
+    promoCode: string | null;
     holdExpiresAt: string;
     event: {
       slug: string;
@@ -151,9 +155,30 @@ export function SimulatePaymentClient({ order }: SimulatePaymentClientProps) {
               ))}
             </ul>
 
-            <div className="mt-3.5 flex items-center justify-between border-t border-line pt-3.5 font-display text-base font-extrabold text-ink">
-              <span>Total tagihan</span>
-              <span className="text-gate">{formatRupiah(order.totalAmount)}</span>
+            <div className="mt-3.5 space-y-1.5 border-t border-line pt-3.5 text-xs">
+              {order.discountAmount > 0 && (
+                <>
+                  <div className="flex items-center justify-between text-muted">
+                    <span>Subtotal</span>
+                    <span className="font-semibold text-ink">
+                      {formatRupiah(order.originalAmount)}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-emerald-800 font-medium">
+                    <span className="inline-flex items-center gap-1">
+                      <Tag className="h-3 w-3 text-emerald-700" />
+                      <span>Diskon Promo {order.promoCode && `(${order.promoCode})`}</span>
+                    </span>
+                    <span className="font-semibold text-emerald-800">
+                      -{formatRupiah(order.discountAmount)}
+                    </span>
+                  </div>
+                </>
+              )}
+              <div className="flex items-center justify-between border-t border-line/60 pt-2 font-display text-base font-extrabold text-ink">
+                <span>Total tagihan</span>
+                <span className="text-gate">{formatRupiah(order.totalAmount)}</span>
+              </div>
             </div>
           </div>
 

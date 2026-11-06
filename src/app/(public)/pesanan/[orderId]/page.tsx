@@ -119,6 +119,11 @@ export default async function OrderResultPage({
               <p className="text-xs text-muted">
                 ID pesanan: <span className="font-mono font-semibold">{order.id}</span> • Total:{" "}
                 <strong className="text-ink">{formatRupiah(order.totalAmount)}</strong>
+                {order.discountAmount && order.discountAmount > 0 ? (
+                  <span className="ml-2 inline-flex items-center gap-1 rounded-full border border-emerald-300 bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-800">
+                    Hemat {formatRupiah(order.discountAmount)} {order.promoCode && `(${order.promoCode})`}
+                  </span>
+                ) : null}
               </p>
             </div>
           </div>

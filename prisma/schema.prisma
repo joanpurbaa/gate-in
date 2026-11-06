@@ -56,13 +56,25 @@ enum EventCategory {
   SPORTS
 }
 
+enum DiscountType {
+  PERCENTAGE
+  FIXED_AMOUNT
+}
+
+enum PromoUsageStatus {
+  RESERVED
+  CONFIRMED
+  RELEASED
+}
+
 model Organizer {
-  id           String   @id @default(cuid())
-  email        String   @unique
+  id           String      @id @default(cuid())
+  email        String      @unique
   name         String
   passwordHash String
-  createdAt    DateTime @default(now())
+  createdAt    DateTime    @default(now())
   events       Event[]
+  promotions   Promotion[]
 }
 
 model Event {
@@ -98,6 +110,7 @@ model Event {
   orders      Order[]
   tickets     Ticket[]
   waitingList WaitingListEntry[]
+  promotions  Promotion[]
 
   @@index([organizerId])
   @@index([status])
@@ -115,6 +128,7 @@ model Zone {
   sortOrder Int    @default(0)
   seats       Seat[]
   waitingList WaitingListEntry[]
+  promotions  Promotion[]
 
   @@index([eventId])
 }
@@ -152,6 +166,11 @@ model Order {
   buyerPhone    String
   status        OrderStatus @default(PENDING)
   totalAmount   Int
+  originalAmount Int?
+  discountAmount Int         @default(0)
+  promoId       String?
+  promotion     Promotion?  @relation(fields: [promoId], references: [id], onDelete: SetNull)
+  promoCode     String?
   holdToken     String      @unique
   holdExpiresAt DateTime
   paymentRef        String?
@@ -162,11 +181,13 @@ model Order {
   waError           String?
   createdAt         DateTime    @default(now())
 
-  seats   Seat[]
-  tickets Ticket[]
+  seats      Seat[]
+  tickets    Ticket[]
+  promoUsage PromoUsage?
 
   @@index([eventId, status])
   @@index([status, holdExpiresAt])
+  @@index([promoId])
 }
 
 model Ticket {
@@ -206,5 +227,55 @@ model WaitingListEntry {
   @@index([eventId, zoneId, status, createdAt])
   @@index([token])
   @@index([status, offerExpiresAt])
+}
+
+model Promotion {
+  id                String       @id @default(cuid())
+  organizerId       String
+  organizer         Organizer    @relation(fields: [organizerId], references: [id], onDelete: Cascade)
+  name              String
+  code              String
+  description       String       @default("")
+  discountType      DiscountType
+  discountValue     Int
+  maxDiscountAmount Int?
+  minPurchaseAmount Int          @default(0)
+  eventId           String?
+  event             Event?       @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  zoneId            String?
+  zone              Zone?        @relation(fields: [zoneId], references: [id], onDelete: Cascade)
+  startsAt          DateTime
+  expiresAt         DateTime
+  totalQuota        Int?
+  maxUsesPerUser    Int          @default(1)
+  isActive          Boolean      @default(true)
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  orders Order[]
+  usages PromoUsage[]
+
+  @@unique([organizerId, code])
+  @@index([code])
+  @@index([organizerId, isActive])
+  @@index([eventId])
+}
+
+model PromoUsage {
+  id             String           @id @default(cuid())
+  promoId        String
+  promotion      Promotion        @relation(fields: [promoId], references: [id], onDelete: Cascade)
+  orderId        String           @unique
+  order          Order            @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  buyerPhone     String
+  discountAmount Int
+  status         PromoUsageStatus @default(RESERVED)
+  createdAt      DateTime         @default(now())
+  confirmedAt    DateTime?
+  releasedAt     DateTime?
+
+  @@index([promoId, status])
+  @@index([promoId, buyerPhone, status])
+  @@index([orderId])
 }
 

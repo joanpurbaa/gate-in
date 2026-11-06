@@ -61,6 +61,27 @@ Agent: centang `[x]` setelah tahap lulus `lint` + `build` + verifikasi di `docs/
   - **Peningkatan Kontras Actionable Insights**:
     - Memperbaiki kontras teks kartu rekomendasi dengan membuang kelas `dark:` yang terpicu oleh tema gelap sistem operasi pemakai (sehingga sebelumnya menghasilkan teks warna pastel muda pucat di atas latar putih).
     - Memperbarui gaya kartu dengan judul tebal bergradasi pekat (`text-emerald-950`, `text-amber-950`, `text-indigo-950`), isi pesan berkontras tinggi (`text-emerald-900`, `text-amber-900`, `text-indigo-900`), serta lencana badge tebal kontras tinggi (`bg-emerald-700 text-white`, `bg-amber-700 text-white`, dsb.).
+- **GateIn Promotion & Promo Code Manager (Diskon Tiket & Transaksi Terproteksi)**:
+  - **Skema Basis Data & Migrasi (`prisma/schema.prisma`)**:
+    - Migrasi `20261106200000_add_promotion_and_promo_code` menambahkan enum `DiscountType` (`PERCENTAGE`, `FIXED_AMOUNT`) dan `PromoUsageStatus` (`RESERVED`, `CONFIRMED`, `RELEASED`).
+    - Model `Promotion`: kode unik (uppercase), nama, jenis diskon, nilai diskon, batasan maksimal diskon (capping), batas minimum belanja, pembatasan target acara (`eventId`) dan zona (`zoneId`), periode aktif (`startsAt`, `expiresAt`), kuota penggunaan total (`totalQuota`), batas pemakaian per pembeli (`maxUsesPerUser`), dan status aktif (`isActive`).
+    - Model `PromoUsage`: pencatatan reservasi penggunaan promo secara atomik yang terikat ke `orderId` dan nomor WhatsApp pembeli (`buyerPhone` ternormalisasi 62xxx).
+    - Kolom `Order`: penambahan `originalAmount`, `discountAmount`, `promoId`, dan `promoCode` untuk jejak audit finansial resmi.
+  - **Mesin Validasi & Integritas Transaksi (`src/lib/promo/service.ts`, `src/lib/seats.ts`)**:
+    - Validasi multi-lapisan di server: pengecekan keberadaan kode promo, status aktif, jendela waktu valid (waktu server), kesesuaian acara, kesesuaian zona tiket, kuota aktif (menghitung `CONFIRMED` + `RESERVED` yang hold-nya belum kedaluwarsa), dan batas penggunaan per pembeli lintas format nomor HP.
+    - **Proteksi Concurrency & Anti-Over-Subscribed**: menggunakan `SELECT "id" FROM "Promotion" WHERE "code" = ${cleanCode} FOR UPDATE` di dalam transaksi database atomik untuk memblokir race condition saat banyak pembeli berebut sisa kuota promo terakhir.
+    - **Siklus Hidup Kuota Otomatis**: kuota ditahan (`RESERVED`) saat hold kursi, dikonfirmasi (`CONFIRMED`) saat order dibayar, dan otomatis dilepas kembali (`RELEASED`) saat pesanan dibatalkan atau kedaluwarsa (`EXPIRED`).
+    - **Integritas Pembayaran Berpromo**: memperbarui verifikasi `confirmOrderSold` agar memvalidasi subtotal pesanan terhadap `order.originalAmount ?? order.totalAmount`, menjamin pesanan dengan diskon promo dapat dikonfirmasi lunas tanpa kesalahan penolakan harga.
+  - **Integrasi Alur Checkout Pembeli (`CheckoutDrawer.tsx`, `BookingFlowClient.tsx`)**:
+    - Form promo interaktif dengan tombol "Terapkan", validasi server real-time via `/api/promos/validate`, rincian breakdown harga transparan (Subtotal, Diskon Promo, Total Pembayaran), dan pill badge promo yang dapat dilepas dengan 1 klik.
+    - Menampilkan informasi promo dan penghematan pada halaman konfirmasi pembayaran (`/bayar/[orderId]`) dan halaman tiket resmi (`/pesanan/[orderId]`).
+  - **Modul Manajemen Promosi Penyelenggara (`/admin/promos`)**:
+    - Dashboard promo lengkap dengan 4 KPI cards: Total Promo Aktif/Berakhir, Total Penggunaan Tiket, Total Diskon Diberikan, dan Total Penjualan Didapat (GMV order berpromo).
+    - Filter pencarian kode/nama, filter status promo (Semua, Aktif, Kuota Habis, Berakhir, Nonaktif), quick toggle status aktif, dialog konfirmasi hapus aman (promo yang sudah memiliki riwayat penggunaan dinonaktifkan otomatis demi integritas data).
+    - Modal formulir pembuatan & pengeditan kode promo dengan validasi interaktif.
+  - **Pengujian Otomatis Menyeluruh (`scripts/test-promo.ts`)**:
+    - Lolos 100% pada seluruh 15 skenario pengujian: promo persentase, potongan tetap (fixed amount), capping diskon maksimal, kode salah/tidak ada, promo nonaktif, promo belum mulai, promo kedaluwarsa, kuota habis, minimum belanja belum tercapai, event mismatch, zone mismatch, batas penggunaan per WhatsApp, penguncian konkurensi (race condition), pelepasan otomatis kuota saat order kedaluwarsa, serta konfirmasi pembayaran dan kalkulasi analitik organizer.
+    - Seluruh pengujian regresi (`test-analytics.ts`, `test-waiting-list.ts`, `test-locking.ts`) terverifikasi tetap lulus 100%.
 - **Perbaikan Input Focus pada CheckoutDrawer**:
   - Dikonfirmasi dan diuji via headless Chrome: input nama dan nomor telepon di `CheckoutDrawer.tsx` menggunakan controlled state tanpa `autoFocus`, serta dilengkapi atribut `name` dan `autoComplete` standar (`name="buyerName"` `autoComplete="name"`, `name="buyerPhone"` `autoComplete="tel"`).
   - Pengetikan nomor telepon (misal `082...`) mempertahankan fokus sepenuhnya pada kolom nomor WhatsApp tanpa terlempar kembali ke kolom nama.

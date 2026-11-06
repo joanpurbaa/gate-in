@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   AlertCircle,
   Calendar,
   Lock,
   MapPin,
   Phone,
+  Tag,
   User,
   X,
   Loader2,
@@ -15,10 +16,18 @@ import { formatRupiah } from "@/lib/money";
 import { formatDateTime } from "@/lib/time";
 import type { SelectedSeatSummary } from "./SelectedSeatsBar";
 
+export interface AppliedPromoInfo {
+  code: string;
+  name: string;
+  discountAmount: number;
+  finalTotal: number;
+}
+
 export interface CheckoutDrawerProps {
   isOpen: boolean;
   onClose: () => void;
   event: {
+    id: string;
     name: string;
     venueName: string;
     startsAt: string;
@@ -29,6 +38,8 @@ export interface CheckoutDrawerProps {
   onBuyerNameChange: (val: string) => void;
   buyerPhone: string;
   onBuyerPhoneChange: (val: string) => void;
+  appliedPromo: AppliedPromoInfo | null;
+  onApplyPromo: (promo: AppliedPromoInfo | null) => void;
   onSubmit: (e: React.FormEvent) => void;
   isSubmitting: boolean;
   errorMessage: string | null;
@@ -44,11 +55,59 @@ export function CheckoutDrawer({
   onBuyerNameChange,
   buyerPhone,
   onBuyerPhoneChange,
+  appliedPromo,
+  onApplyPromo,
   onSubmit,
   isSubmitting,
   errorMessage,
 }: CheckoutDrawerProps) {
-  const totalAmount = selectedSeats.reduce((acc, s) => acc + s.price, 0);
+  const subtotal = selectedSeats.reduce((acc, s) => acc + s.price, 0);
+  const finalTotal = appliedPromo ? Math.max(0, subtotal - appliedPromo.discountAmount) : subtotal;
+
+  const [promoInput, setPromoInput] = useState("");
+  const [promoError, setPromoError] = useState<string | null>(null);
+  const [isValidatingPromo, setIsValidatingPromo] = useState(false);
+
+  // Validasi kode promo ke endpoint server
+  const handleValidatePromo = async () => {
+    const code = promoInput.trim().toUpperCase();
+    if (!code || isValidatingPromo) return;
+
+    setPromoError(null);
+    setIsValidatingPromo(true);
+
+    try {
+      const res = await fetch("/api/promos/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          eventId: event.id,
+          promoCode: code,
+          seatLabels: selectedSeats.map((s) => s.label),
+          buyerPhone: buyerPhone.trim() || undefined,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.valid) {
+        setPromoError(data.error || "Kode promo tidak valid");
+        return;
+      }
+
+      onApplyPromo({
+        code: data.promo.code,
+        name: data.promo.name,
+        discountAmount: data.discountAmount,
+        finalTotal: data.finalTotal,
+      });
+      setPromoInput("");
+      setPromoError(null);
+    } catch {
+      setPromoError("Gagal memeriksa promo. Periksa koneksi internet Anda.");
+    } finally {
+      setIsValidatingPromo(false);
+    }
+  };
 
   // Kunci scroll latar dan tangani Escape saat terbuka
   useEffect(() => {
@@ -174,12 +233,99 @@ export function CheckoutDrawer({
                   </div>
                 ))}
 
-                {/* Subtotal & Total */}
-                <div className="flex items-center justify-between bg-card/60 px-3.5 py-3 text-xs font-bold text-ink">
-                  <span>Total Pembayaran</span>
-                  <span className="font-display text-sm font-extrabold text-gate">
-                    {formatRupiah(totalAmount)}
-                  </span>
+                {/* Rincian Harga & Promo Code */}
+                <div className="bg-card/60 px-3.5 py-3 space-y-2 text-xs">
+                  {/* Form Input Promo jika belum terpasang */}
+                  {!appliedPromo ? (
+                    <div className="space-y-1.5 pb-1">
+                      <div className="flex gap-2">
+                        <div className="relative flex-1">
+                          <Tag className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted" />
+                          <input
+                            type="text"
+                            value={promoInput}
+                            onChange={(e) => {
+                              setPromoInput(e.target.value.toUpperCase());
+                              setPromoError(null);
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault();
+                                handleValidatePromo();
+                              }
+                            }}
+                            placeholder="Punya kode promo?"
+                            disabled={isSubmitting || isValidatingPromo}
+                            className="w-full rounded-input border border-line bg-card py-1.5 pl-8.5 pr-2.5 text-xs font-mono uppercase text-ink placeholder:font-sans placeholder:normal-case placeholder:text-muted focus:border-gate focus:outline-none disabled:opacity-60"
+                          />
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handleValidatePromo}
+                          disabled={!promoInput.trim() || isSubmitting || isValidatingPromo}
+                          className="rounded-input bg-page px-3 py-1.5 text-xs font-bold text-ink border border-line hover:bg-gate/10 hover:text-gate disabled:opacity-50 transition"
+                        >
+                          {isValidatingPromo ? "Memeriksa..." : "Terapkan"}
+                        </button>
+                      </div>
+                      {promoError && (
+                        <p className="text-[11px] text-rose-700 flex items-center gap-1 font-medium">
+                          <AlertCircle className="h-3 w-3 shrink-0" />
+                          <span>{promoError}</span>
+                        </p>
+                      )}
+                    </div>
+                  ) : (
+                    /* Badge Promo Diterapkan */
+                    <div className="flex items-center justify-between rounded-xl border border-emerald-300 bg-emerald-50/90 px-3 py-2 text-xs text-emerald-950">
+                      <div className="flex items-center gap-2">
+                        <Tag className="h-3.5 w-3.5 text-emerald-700" />
+                        <div>
+                          <span className="font-mono font-bold tracking-wide">
+                            {appliedPromo.code}
+                          </span>
+                          <span className="ml-1 text-[11px] text-emerald-800">
+                            (Hemat {formatRupiah(appliedPromo.discountAmount)})
+                          </span>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onApplyPromo(null);
+                          setPromoInput("");
+                          setPromoError(null);
+                        }}
+                        disabled={isSubmitting}
+                        className="rounded-full p-1 text-emerald-800 hover:bg-emerald-200 transition"
+                        title="Hapus promo"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Subtotal */}
+                  <div className="flex items-center justify-between text-muted pt-1">
+                    <span>Subtotal</span>
+                    <span className="font-semibold text-ink">{formatRupiah(subtotal)}</span>
+                  </div>
+
+                  {/* Potongan Diskon */}
+                  {appliedPromo && (
+                    <div className="flex items-center justify-between text-emerald-700 font-semibold">
+                      <span>Potongan Diskon</span>
+                      <span>-{formatRupiah(appliedPromo.discountAmount)}</span>
+                    </div>
+                  )}
+
+                  {/* Total Pembayaran */}
+                  <div className="flex items-center justify-between border-t border-line/60 pt-2 font-bold text-ink">
+                    <span>Total Pembayaran</span>
+                    <span className="font-display text-base font-extrabold text-gate">
+                      {formatRupiah(finalTotal)}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>

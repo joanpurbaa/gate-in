@@ -83,6 +83,9 @@ export default async function PaymentPage({
         buyerName: order.buyerName,
         buyerPhone: order.buyerPhone,
         totalAmount: order.totalAmount,
+        originalAmount: order.originalAmount ?? order.totalAmount,
+        discountAmount: order.discountAmount ?? 0,
+        promoCode: order.promoCode ?? null,
         holdExpiresAt: order.holdExpiresAt.toISOString(),
         event: {
           slug: order.event.slug,

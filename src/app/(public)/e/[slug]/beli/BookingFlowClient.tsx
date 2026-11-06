@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { SeatMap } from "@/components/seatmap/SeatMap";
 import { SelectedSeatsBar, type SelectedSeatSummary } from "@/components/seatmap/SelectedSeatsBar";
-import { CheckoutDrawer } from "@/components/seatmap/CheckoutDrawer";
+import { CheckoutDrawer, type AppliedPromoInfo } from "@/components/seatmap/CheckoutDrawer";
 import {
   ZONE_COLOR_PALETTE,
   type SeatEffectiveStatus,
@@ -61,6 +61,7 @@ export function BookingFlowClient({
   const [buyerName, setBuyerName] = useState(offer?.buyerName || "");
   const [buyerPhoneRaw, setBuyerPhoneRaw] = useState(offer?.buyerPhone || "");
   const [formError, setFormError] = useState<string | null>(null);
+  const [appliedPromo, setAppliedPromo] = useState<AppliedPromoInfo | null>(null);
 
   // State pemilihan kursi
   const [seats, setSeats] = useState<SeatMapItem[]>(initialSeats);
@@ -69,6 +70,9 @@ export function BookingFlowClient({
   const [submittingHold, setSubmittingHold] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [lastSyncedAt, setLastSyncedAt] = useState<Date>(new Date());
+
+  // Promo otomatis nonaktif jika tidak ada kursi terpilih
+  const effectivePromo = selectedLabels.length > 0 ? appliedPromo : null;
 
   const zoneMap = useMemo(() => new Map(zones.map((z) => [z.id, z])), [zones]);
 
@@ -198,6 +202,7 @@ export function BookingFlowClient({
           buyerPhone: phone62,
           seatLabels: selectedLabels,
           offerToken: offer?.token,
+          promoCode: effectivePromo?.code,
         }),
       });
 
@@ -354,6 +359,7 @@ export function BookingFlowClient({
         isOpen={isCheckoutOpen}
         onClose={handleCloseCheckout}
         event={{
+          id: event.id,
           name: event.name,
           venueName: event.venueName,
           startsAt: event.startsAt,
@@ -364,6 +370,8 @@ export function BookingFlowClient({
         onBuyerNameChange={setBuyerName}
         buyerPhone={buyerPhoneRaw}
         onBuyerPhoneChange={setBuyerPhoneRaw}
+        appliedPromo={effectivePromo}
+        onApplyPromo={setAppliedPromo}
         onSubmit={handleConfirmOrder}
         isSubmitting={submittingHold}
         errorMessage={formError}

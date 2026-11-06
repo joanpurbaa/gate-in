@@ -2,6 +2,8 @@ import { prisma } from "./db.ts";
 import { generateHoldToken, generateOrderId, generateTicketCode } from "./qr.ts";
 import { dispatchSeatsReleased } from "./events/seat-events.ts";
 import { sendOrderExpiredWhatsApp } from "./wa.ts";
+import { normalizePhoneTo62 } from "./phone.ts";
+import { validatePromoCode } from "./promo/service.ts";
 
 export const HOLD_DURATION_MS = 10 * 60 * 1000; // 10 menit
 
@@ -38,6 +40,7 @@ export interface HoldSeatsInput {
   buyerName: string;
   buyerPhone: string;
   holdDurationMs?: number;
+  promoCode?: string;
 }
 
 export interface HoldSeatsResult {
@@ -45,6 +48,9 @@ export interface HoldSeatsResult {
   holdToken: string;
   holdExpiresAt: Date;
   totalAmount: number;
+  originalAmount?: number;
+  discountAmount?: number;
+  promoCode?: string;
   seats: { id: string; label: string; zoneName: string; price: number }[];
 }
 
@@ -86,14 +92,53 @@ export async function holdSeatsAndCreateOrder(
     }
   }
 
-  const totalAmount = dbSeats.reduce((sum, s) => sum + (s.zone?.price ?? 0), 0);
+  const subtotal = dbSeats.reduce((sum, s) => sum + (s.zone?.price ?? 0), 0);
   const orderId = generateOrderId();
   const holdToken = generateHoldToken();
   const now = new Date();
   const holdExpiresAt = new Date(now.getTime() + (input.holdDurationMs ?? HOLD_DURATION_MS));
 
+  let finalTotal = subtotal;
+  let originalAmount: number | undefined;
+  let discountAmount = 0;
+  let appliedPromoId: string | null = null;
+  let appliedPromoCode: string | null = null;
+
   try {
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(
+      async (tx) => {
+        // Jika pembeli menyertakan kode promo, validasi dan kunci baris promo
+      if (input.promoCode) {
+        const cleanCode = input.promoCode.trim().toUpperCase();
+
+        // Kunci baris promo secara eksklusif untuk mencegah kuota terlewati akibat balapan transaksi
+        await tx.$queryRaw<{ id: string }[]>`
+          SELECT "id" FROM "Promotion"
+          WHERE "code" = ${cleanCode}
+          FOR UPDATE
+        `;
+
+        const validation = await validatePromoCode(
+          {
+            eventId: input.eventId,
+            promoCode: cleanCode,
+            seatLabels: uniqueLabels,
+            buyerPhone: input.buyerPhone,
+          },
+          tx
+        );
+
+        if (!validation.valid) {
+          throw new Error(validation.error);
+        }
+
+        originalAmount = subtotal;
+        discountAmount = validation.discountAmount;
+        finalTotal = validation.finalTotal;
+        appliedPromoId = validation.promo.id;
+        appliedPromoCode = validation.promo.code;
+      }
+
       await tx.order.create({
         data: {
           id: orderId,
@@ -101,11 +146,28 @@ export async function holdSeatsAndCreateOrder(
           buyerName: input.buyerName,
           buyerPhone: input.buyerPhone,
           status: "PENDING",
-          totalAmount,
+          totalAmount: finalTotal,
+          originalAmount,
+          discountAmount,
+          promoId: appliedPromoId,
+          promoCode: appliedPromoCode,
           holdToken,
           holdExpiresAt,
         },
       });
+
+      // Reservasi penggunaan kuota promo
+      if (appliedPromoId && discountAmount > 0) {
+        await tx.promoUsage.create({
+          data: {
+            promoId: appliedPromoId,
+            orderId,
+            buyerPhone: normalizePhoneTo62(input.buyerPhone) || input.buyerPhone,
+            discountAmount,
+            status: "RESERVED",
+          },
+        });
+      }
 
       // Satu statement atomik untuk mengunci dan memperbarui seluruh kursi yang diminta
       const updated = await tx.$queryRaw<{ id: string; label: string }[]>`
@@ -142,7 +204,7 @@ export async function holdSeatsAndCreateOrder(
         where: { id: input.eventId },
         data: { layoutLocked: true },
       });
-    });
+    }, { timeout: 15000, maxWait: 10000 });
   } catch (err) {
     if (err instanceof SeatsTakenError) {
       throw err;
@@ -154,7 +216,10 @@ export async function holdSeatsAndCreateOrder(
     orderId,
     holdToken,
     holdExpiresAt,
-    totalAmount,
+    totalAmount: finalTotal,
+    originalAmount,
+    discountAmount: discountAmount > 0 ? discountAmount : undefined,
+    promoCode: appliedPromoCode ?? undefined,
     seats: dbSeats.map((s) => ({
       id: s.id,
       label: s.label,
@@ -171,56 +236,81 @@ export async function releaseOrderHold(
   orderId: string,
   nextOrderStatus: "FAILED" | "EXPIRED" = "FAILED"
 ): Promise<{ releasedSeats: number; status: "FAILED" | "EXPIRED" | "PAID" }> {
-  return prisma.$transaction(async (tx) => {
-    const rows = await tx.$queryRaw<{ id: string; eventId: string; status: string; holdToken: string }[]>`
-      SELECT "id", "eventId", "status"::text AS "status", "holdToken"
-      FROM "Order"
-      WHERE "id" = ${orderId}
-      FOR UPDATE
-    `;
-    const order = rows[0];
-    if (!order) {
-      throw new OrderHoldInvalidError("ORDER_NOT_FOUND", "Pesanan tidak ditemukan");
-    }
-    if (order.status === "PAID") {
-      return { releasedSeats: 0, status: "PAID" as const };
-    }
+  let toDispatch: {
+    eventId: string;
+    orderId: string;
+    reason: "EXPIRED" | "CANCELLED";
+    releasedSeats: { id: string; label: string; zoneId: string | null }[];
+    timestamp: Date;
+  } | null = null;
 
-    const releasedSeats = await tx.$queryRaw<{ id: string; label: string; zoneId: string | null }[]>`
-      UPDATE "Seat"
-      SET "status" = 'AVAILABLE'::"SeatStatus",
-          "heldUntil" = NULL,
-          "holdToken" = NULL,
-          "orderId" = NULL
-      WHERE "holdToken" = ${order.holdToken}
-        AND "status" = 'HELD'::"SeatStatus"
-      RETURNING "id", "label", "zoneId"
-    `;
+  const result = await prisma.$transaction(
+    async (tx) => {
+      const rows = await tx.$queryRaw<{ id: string; eventId: string; status: string; holdToken: string }[]>`
+        SELECT "id", "eventId", "status"::text AS "status", "holdToken"
+        FROM "Order"
+        WHERE "id" = ${orderId}
+        FOR UPDATE
+      `;
+      const order = rows[0];
+      if (!order) {
+        throw new OrderHoldInvalidError("ORDER_NOT_FOUND", "Pesanan tidak ditemukan");
+      }
+      if (order.status === "PAID") {
+        return { releasedSeats: 0, status: "PAID" as const };
+      }
 
-    const finalStatus = order.status === "EXPIRED" ? "EXPIRED" : nextOrderStatus;
-    const now = new Date();
-    if (order.status === "PENDING") {
-      await tx.order.update({
-        where: { id: orderId },
-        data: {
-          status: finalStatus,
-          ...(finalStatus === "EXPIRED" ? { expiredAt: now } : {}),
-        },
-      });
-    }
+      const releasedSeats = await tx.$queryRaw<{ id: string; label: string; zoneId: string | null }[]>`
+        UPDATE "Seat"
+        SET "status" = 'AVAILABLE'::"SeatStatus",
+            "heldUntil" = NULL,
+            "holdToken" = NULL,
+            "orderId" = NULL
+        WHERE "holdToken" = ${order.holdToken}
+          AND "status" = 'HELD'::"SeatStatus"
+        RETURNING "id", "label", "zoneId"
+      `;
 
-    if (releasedSeats.length > 0) {
-      await dispatchSeatsReleased({
-        eventId: order.eventId,
-        orderId,
-        reason: finalStatus === "EXPIRED" ? "EXPIRED" : "CANCELLED",
-        releasedSeats,
-        timestamp: now,
-      });
-    }
+      const finalStatus = order.status === "EXPIRED" ? "EXPIRED" : nextOrderStatus;
+      const now = new Date();
+      if (order.status === "PENDING") {
+        await tx.order.update({
+          where: { id: orderId },
+          data: {
+            status: finalStatus,
+            ...(finalStatus === "EXPIRED" ? { expiredAt: now } : {}),
+          },
+        });
 
-    return { releasedSeats: releasedSeats.length, status: finalStatus };
-  });
+        // Lepaskan reservasi kuota promo bila pesanan dibatalkan atau expired
+        await tx.promoUsage.updateMany({
+          where: { orderId, status: "RESERVED" },
+          data: { status: "RELEASED", releasedAt: now },
+        });
+      }
+
+      if (releasedSeats.length > 0) {
+        toDispatch = {
+          eventId: order.eventId,
+          orderId,
+          reason: finalStatus === "EXPIRED" ? "EXPIRED" : "CANCELLED",
+          releasedSeats,
+          timestamp: now,
+        };
+      }
+
+      return { releasedSeats: releasedSeats.length, status: finalStatus };
+    },
+    { timeout: 15000, maxWait: 10000 }
+  );
+
+  if (toDispatch) {
+    await dispatchSeatsReleased(toDispatch).catch((err) => {
+      console.error("[releaseOrderHold] dispatchSeatsReleased error:", err);
+    });
+  }
+
+  return result;
 }
 
 /**
@@ -240,11 +330,12 @@ export async function confirmOrderSold(orderId: string): Promise<{
         eventId: string;
         status: string;
         totalAmount: number;
+        originalAmount: number | null;
         holdToken: string;
         holdExpiresAt: Date;
       }[]
     >`
-      SELECT "id", "eventId", "status"::text AS "status", "totalAmount", "holdToken", "holdExpiresAt"
+      SELECT "id", "eventId", "status"::text AS "status", "totalAmount", "originalAmount", "holdToken", "holdExpiresAt"
       FROM "Order"
       WHERE "id" = ${orderId}
       FOR UPDATE
@@ -303,9 +394,10 @@ export async function confirmOrderSold(orderId: string): Promise<{
     `;
 
     const heldSum = heldSeats.reduce((acc, s) => acc + Number(s.price), 0);
+    const expectedSubtotal = order.originalAmount ?? order.totalAmount;
 
     // 1. Jika kursi sudah diambil orang lain setelah hold kedaluwarsa (token berganti) -> HOLD_TAKEN
-    if (heldSeats.length === 0 || heldSum !== order.totalAmount) {
+    if (heldSeats.length === 0 || heldSum !== expectedSubtotal) {
       const releasedSeats = await tx.$queryRaw<{ id: string; label: string; zoneId: string | null }[]>`
         UPDATE "Seat"
         SET "status" = 'AVAILABLE'::"SeatStatus",
@@ -319,6 +411,10 @@ export async function confirmOrderSold(orderId: string): Promise<{
       await tx.order.update({
         where: { id: orderId },
         data: { status: "EXPIRED", expiredAt: now },
+      });
+      await tx.promoUsage.updateMany({
+        where: { orderId, status: "RESERVED" },
+        data: { status: "RELEASED", releasedAt: now },
       });
 
       return {
@@ -344,6 +440,10 @@ export async function confirmOrderSold(orderId: string): Promise<{
       await tx.order.update({
         where: { id: orderId },
         data: { status: "EXPIRED", expiredAt: now },
+      });
+      await tx.promoUsage.updateMany({
+        where: { orderId, status: "RESERVED" },
+        data: { status: "RELEASED", releasedAt: now },
       });
 
       return {
@@ -384,6 +484,12 @@ export async function confirmOrderSold(orderId: string): Promise<{
       },
     });
 
+    // Ubah status penggunaan promo menjadi CONFIRMED
+    await tx.promoUsage.updateMany({
+      where: { orderId, status: "RESERVED" },
+      data: { status: "CONFIRMED", confirmedAt: now },
+    });
+
     await tx.event.update({
       where: { id: order.eventId },
       data: { layoutLocked: true },
@@ -420,7 +526,7 @@ export async function confirmOrderSold(orderId: string): Promise<{
       orderId,
       tickets: createdTickets,
     };
-  });
+  }, { timeout: 15000, maxWait: 10000 });
 
   // Jika transaksi mendeteksi kedaluwarsa atau kursi telah diambil, dispatch event dan lempar error
   if (result.status === "EXPIRED") {
@@ -542,6 +648,12 @@ export async function expireStaleOrders(
             status: "EXPIRED",
             expiredAt: now,
           },
+        });
+
+        // Lepaskan reservasi kuota promo untuk pesanan kedaluwarsa
+        await tx.promoUsage.updateMany({
+          where: { orderId: ord.id, status: "RESERVED" },
+          data: { status: "RELEASED", releasedAt: now },
         });
 
         // Kembalikan kursi milik order tersebut menjadi AVAILABLE
