@@ -185,7 +185,7 @@ export function BookingFlowClient({
     const phone62 = normalizePhoneTo62(buyerPhoneRaw);
     if (!phone62) {
       setFormError(
-        "Nomor WhatsApp tidak valid. Gunakan format 08xxxxxxxxxx atau 628xxxxxxxxxx (10–15 digit)."
+        "Nomor WhatsApp wajib diawali 08xx dan ditulis tanpa spasi (contoh: 081212341224, 10–15 digit)."
       );
       return;
     }

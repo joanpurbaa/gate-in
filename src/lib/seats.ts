@@ -139,21 +139,26 @@ export async function holdSeatsAndCreateOrder(
         appliedPromoCode = validation.promo.code;
       }
 
+      const orderData: Record<string, unknown> = {
+        id: orderId,
+        eventId: input.eventId,
+        buyerName: input.buyerName,
+        buyerPhone: input.buyerPhone,
+        status: "PENDING",
+        totalAmount: finalTotal,
+        holdToken,
+        holdExpiresAt,
+      };
+
+      if (appliedPromoId && discountAmount > 0) {
+        orderData.originalAmount = originalAmount;
+        orderData.discountAmount = discountAmount;
+        orderData.promoId = appliedPromoId;
+        orderData.promoCode = appliedPromoCode;
+      }
+
       await tx.order.create({
-        data: {
-          id: orderId,
-          eventId: input.eventId,
-          buyerName: input.buyerName,
-          buyerPhone: input.buyerPhone,
-          status: "PENDING",
-          totalAmount: finalTotal,
-          originalAmount,
-          discountAmount,
-          promoId: appliedPromoId,
-          promoCode: appliedPromoCode,
-          holdToken,
-          holdExpiresAt,
-        },
+        data: orderData as Parameters<typeof tx.order.create>[0]["data"],
       });
 
       // Reservasi penggunaan kuota promo

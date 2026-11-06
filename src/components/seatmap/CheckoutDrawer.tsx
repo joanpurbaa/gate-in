@@ -363,12 +363,17 @@ export function CheckoutDrawer({
               </div>
 
               <div>
-                <label
-                  htmlFor="checkout-buyer-phone"
-                  className="block text-xs font-semibold text-ink"
-                >
-                  Nomor WhatsApp aktif
-                </label>
+                <div className="flex items-center justify-between">
+                  <label
+                    htmlFor="checkout-buyer-phone"
+                    className="block text-xs font-semibold text-ink"
+                  >
+                    Nomor WhatsApp aktif
+                  </label>
+                  <span className="text-[11px] font-bold text-gate">
+                    Format: 08xxx (tanpa spasi)
+                  </span>
+                </div>
                 <div className="relative mt-1.5">
                   <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-muted">
                     <Phone className="h-4 w-4" />
@@ -381,15 +386,21 @@ export function CheckoutDrawer({
                     autoComplete="tel"
                     required
                     disabled={isSubmitting}
-                    placeholder="Contoh: 082275338090"
+                    placeholder="Contoh: 081212341224 (tanpa spasi)"
                     value={buyerPhone}
-                    onChange={(e) => onBuyerPhoneChange(e.target.value)}
+                    onChange={(e) => onBuyerPhoneChange(e.target.value.replace(/[\s\-]/g, ""))}
                     className="min-h-11 w-full rounded-input border border-line bg-card pl-9.5 pr-3.5 py-2.5 text-sm text-ink placeholder:text-muted focus:border-gate focus:outline-none disabled:opacity-60"
                   />
                 </div>
-                <p className="mt-1 text-[11px] text-muted">
-                  E-ticket dan QR code akan otomatis dikirimkan ke nomor WhatsApp ini.
-                </p>
+                <div className="mt-1.5 rounded-lg border border-amber-300 bg-amber-50/90 p-2 text-[11px] text-amber-950">
+                  <p className="font-semibold flex items-center gap-1">
+                    <span>⚠️</span>
+                    <span>Wajib diawali <strong>08xx</strong> dan ditulis <strong>tanpa spasi</strong> (contoh: <code>081212341224</code>, bukan <code>0812 1234 1224</code>).</span>
+                  </p>
+                  <p className="mt-0.5 text-[10px] text-amber-900/90">
+                    E-ticket dan QR code akan otomatis dikirimkan ke nomor WhatsApp ini setelah pembayaran.
+                  </p>
+                </div>
               </div>
             </div>
 

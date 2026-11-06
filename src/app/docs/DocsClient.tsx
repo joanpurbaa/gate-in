@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import Link from "next/link";
 import {
   Search,
@@ -59,6 +59,7 @@ export function DocsClient() {
   const [activeSectionId, setActiveSectionId] = useState<string>("pengunjung-mulai");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const contentContainerRef = useRef<HTMLElement>(null);
 
   // Filter bagian navigasi berdasarkan kata kunci
   const filteredSections = useMemo(() => {
@@ -67,13 +68,15 @@ export function DocsClient() {
     return SECTIONS.filter((s) => s.title.toLowerCase().includes(q));
   }, [filterQuery]);
 
-  // Scroll spy menggunakan IntersectionObserver
+  // Scroll spy menggunakan IntersectionObserver pada kontainer utama yang di-scroll
   useEffect(() => {
+    const container = contentContainerRef.current;
+    if (!container) return;
+
     const observer = new IntersectionObserver(
       (entries) => {
         const visibleEntries = entries.filter((e) => e.isIntersecting);
         if (visibleEntries.length > 0) {
-          // Ambil elemen paling atas yang terlihat
           const topVisible = visibleEntries.reduce((prev, curr) =>
             prev.boundingClientRect.top < curr.boundingClientRect.top ? prev : curr
           );
@@ -81,7 +84,8 @@ export function DocsClient() {
         }
       },
       {
-        rootMargin: "-80px 0px -60% 0px",
+        root: container,
+        rootMargin: "-20px 0px -60% 0px",
         threshold: 0,
       }
     );
@@ -103,17 +107,17 @@ export function DocsClient() {
     });
   }, []);
 
-  // Navigasi halus dengan preferensi reduced motion
+  // Navigasi halus dengan preferensi reduced motion pada kontainer yang di-scroll
   const scrollToSection = useCallback((id: string) => {
     const el = document.getElementById(id);
-    if (!el) return;
+    const container = contentContainerRef.current;
+    if (!el || !container) return;
 
     const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const yOffset = -80;
-    const y = el.getBoundingClientRect().top + window.pageYOffset + yOffset;
+    const targetTop = el.offsetTop - 16;
 
-    window.scrollTo({
-      top: y,
+    container.scrollTo({
+      top: targetTop,
       behavior: prefersReducedMotion ? "auto" : "smooth",
     });
 
@@ -121,9 +125,9 @@ export function DocsClient() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-page text-ink selection:bg-gate/20">
-      {/* 1. Header Bilah Atas Tipis */}
-      <header className="sticky top-0 z-40 flex h-14 w-full items-center justify-between border-b border-line bg-card/90 px-4 backdrop-blur-md sm:px-6">
+    <div className="h-screen flex flex-col overflow-hidden bg-page text-ink selection:bg-gate/20">
+      {/* 1. Header Bilah Atas Tipis (Fixed) */}
+      <header className="shrink-0 flex h-14 w-full items-center justify-between border-b border-line bg-card/95 px-4 backdrop-blur-md sm:px-6 z-40">
         <div className="flex items-center gap-3">
           <Link href="/" className="flex items-center gap-2 group transition" title="Kembali ke Beranda">
             <Logo size="sm" />
@@ -150,10 +154,10 @@ export function DocsClient() {
         </div>
       </header>
 
-      {/* 2. Container Layout 3 Kolom */}
-      <div className="mx-auto flex max-w-[1440px] px-4 sm:px-6">
-        {/* Kolom Kiri: Sidebar Navigasi Desktop */}
-        <aside className="sticky top-14 hidden h-[calc(100vh-3.5rem)] w-64 shrink-0 overflow-y-auto border-r border-line py-6 pr-4 lg:block">
+      {/* 2. Container Layout 3 Kolom: Sidebar Kiri & Kanan Fixed, Hanya Konten Tengah yang Scroll */}
+      <div className="mx-auto flex h-[calc(100vh-3.5rem)] w-full max-w-[1440px] px-4 sm:px-6 overflow-hidden">
+        {/* Kolom Kiri: Sidebar Navigasi Desktop (FIXED in place) */}
+        <aside className="hidden h-full w-64 shrink-0 overflow-y-auto border-r border-line py-6 pr-4 lg:block">
           {/* Filter Pencarian Subjudul */}
           <div className="relative mb-5">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted" />
@@ -242,8 +246,12 @@ export function DocsClient() {
           </nav>
         </aside>
 
-        {/* Kolom Tengah: Konten Dokumentasi (Maksimal ~720px) */}
-        <main className="min-w-0 flex-1 px-0 py-8 lg:px-10">
+        {/* Kolom Tengah: Konten Dokumentasi (Hanya bagian ini yang di-scroll) */}
+        <main
+          ref={contentContainerRef}
+          id="docs-content-container"
+          className="h-full min-w-0 flex-1 overflow-y-auto px-0 py-8 lg:px-10 scroll-smooth"
+        >
           <div className="mx-auto max-w-[720px]">
             {/* Header Pengantar */}
             <div className="mb-10 pb-8 border-b border-line">
@@ -1131,8 +1139,8 @@ export function DocsClient() {
           </div>
         </main>
 
-        {/* Kolom Kanan: "Di halaman ini" Table of Contents Desktop */}
-        <aside className="sticky top-14 hidden h-[calc(100vh-3.5rem)] w-56 shrink-0 overflow-y-auto py-8 pl-4 xl:block">
+        {/* Kolom Kanan: "Di halaman ini" Table of Contents Desktop (FIXED in place) */}
+        <aside className="hidden h-full w-56 shrink-0 overflow-y-auto py-8 pl-4 xl:block">
           <div className="text-[11px] font-bold uppercase tracking-wider text-muted">
             Di Halaman Ini
           </div>
