@@ -18,7 +18,7 @@ export function PublicFooter() {
             <Logo size="md" />
             <p className="text-sm text-muted">
               Platform membeli tiket acara di kawasan Summarecon Mall Bandung dengan denah kursi yang
-              sama seperti susunan ruangan aslinya.
+              sama seperti susunan ruangan aslinya
             </p>
           </div>
 
