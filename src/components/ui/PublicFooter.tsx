@@ -17,7 +17,7 @@ export function PublicFooter() {
           <div className="max-w-md space-y-2.5">
             <Logo size="md" />
             <p className="text-sm text-muted">
-              Tempat membeli tiket acara di kawasan Summarecon Mall Bandung dengan denah kursi yang
+              Platform membeli tiket acara di kawasan Summarecon Mall Bandung dengan denah kursi yang
               sama seperti susunan ruangan aslinya.
             </p>
           </div>
