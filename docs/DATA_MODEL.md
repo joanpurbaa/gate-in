@@ -37,7 +37,8 @@ Index: `(eventId, status)`, unik `(eventId, label)`.
 `id` (cuid panjang, tidak bisa ditebak), `eventId`, `buyerName`, `buyerPhone` (format 62xxx),
 `status` (`PENDING` | `PAID` | `FAILED` | `EXPIRED`),
 `totalAmount` (Int), `holdToken`, `holdExpiresAt`,
-`paymentRef?`, `paidAt?`, `waStatus?` (`SENT` | `FAILED` | `SKIPPED`), `createdAt`.
+`paymentRef?`, `paidAt?`, `expiredAt?`, `expiredNotifiedAt?`, `waStatus?` (`SENT` | `FAILED` | `SKIPPED`), `createdAt`.
+Index: `(eventId, status)`, `(status, holdExpiresAt)`.
 
 ### Ticket
 `id`, `orderId`, `eventId`, `seatId` (**unik**), `code` (**unik**), `status` (`VALID` | `USED`),

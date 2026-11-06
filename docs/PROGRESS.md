@@ -40,6 +40,22 @@ Agent: centang `[x]` setelah tahap lulus `lint` + `build` + verifikasi di `docs/
 - **Schema `neon_auth` bawaan Neon**: dibiarkan tidak tersentuh; semua tabel aplikasi berada di schema `public`.
 - **Atomic Seat Locking (`src/lib/seats.ts`)**: menggunakan satu statement CTE `SELECT ... ORDER BY "id" FOR UPDATE` + `UPDATE "Seat"` untuk mencegah race condition sekaligus mencegah deadlock pada pemilihan multi-kursi. Diuji dengan 8 request paralel di `scripts/test-locking.ts`.
 - **AI Layout Fallback Kuota Free Tier (`src/lib/ai/layout.ts`)**: membaca `GEMINI_MODEL` dari env (`gemini-2.5-flash`) dan bila terkena limit RPM free tier (`429 RESOURCE_EXHAUSTED`), otomatis melakukan retry 1x ke `gemini-2.5-flash-lite` agar demo tidak gagal. Diuji pada 5 skenario di `scripts/test-ai-layout.ts`.
+- **GateIn Automatic Expired Order Recovery**:
+  - **Skema & Migrasi**: Menambahkan `expiredAt` (DateTime), `expiredNotifiedAt` (DateTime), dan index `(status, holdExpiresAt)` pada tabel `Order` melalui migrasi `20261106120000_add_order_expiration_fields`.
+  - **Expiration Engine (`src/lib/seats.ts`)**:
+    - Fungsi `expireStaleOrders` mengeksekusi scanning pesanan `PENDING` yang melewati `holdExpiresAt` dengan `SELECT ... FOR UPDATE SKIP LOCKED` sehingga aman dijalankan oleh multiple concurrent jobs tanpa deadlock atau double-processing.
+    - Mengembalikan kursi ke status `AVAILABLE` (mengosongkan `heldUntil`, `holdToken`, dan `orderId`) dan menandai order `EXPIRED` dengan timestamp `expiredAt`.
+  - **Integritas Pembayaran & Concurrency**:
+    - `confirmOrderSold` memvalidasi `holdExpiresAt` terhadap waktu server. Pembayaran yang tiba setelah kedaluwarsa secara atomik ditolak (`ORDER_EXPIRED`), status disimpan ke database, dan kursi dilepas kembali ke denah.
+    - Idempotent: Order yang sudah `PAID` dijamin tidak dapat di-expire.
+  - **Job Processing & Deployment**:
+    - `vercel.json` dikonfigurasi dengan Vercel Cron untuk menjalankan `/api/cron/expire-orders` setiap menit.
+    - `/api/cron/expire-orders` mendukung otentikasi via `CRON_SECRET` Vercel.
+    - Polling denah `/api/events/[slug]/seats` mengeksekusi lazy/opportunistic background recovery non-blocking, menjamin pembersihan bahkan sebelum cron periodik berjalan.
+  - **Notifikasi Pembeli & Waiting List Hook**:
+    - Notifikasi WhatsApp otomatis dikirim via Fonnte (`sendOrderExpiredWhatsApp`), non-blocking dan dilindungi `expiredNotifiedAt` agar tidak ada notifikasi berulang.
+    - Modul event internal `src/lib/events/seat-events.ts` memancarkan `dispatchSeatsReleased` untuk integrasi modul waiting list di masa mendatang tanpa alokasi sepihak.
+  - **Pengujian**: Seluruh 7 skenario pengujian di `scripts/test-expired-recovery.ts` lulus 100%, dan regresi `test-locking.ts`, `test-checkin.ts`, serta `verify-e2e.ts` lulus 100%.
 - **GateIn Express Booking (Alur Pemilihan Kursi Terintegrasi)**:
   - Mengubah alur pembelian tiket dari model 3 langkah berjenjang menjadi model **Express Booking**:
     1. Pengunjung masuk ke `/e/[slug]/beli` langsung melihat denah kursi interaktif (`SeatMap`) tanpa form pemesan awal.

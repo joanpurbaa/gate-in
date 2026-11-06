@@ -1,11 +1,15 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { prisma } from "@/lib/db";
+import { expireStaleOrders } from "@/lib/seats";
 
 export async function GET(
   _req: NextRequest,
   ctx: { params: Promise<{ slug: string }> }
 ) {
   const { slug } = await ctx.params;
+
+  // Pemulihan oportunistik di latar belakang (non-blocking) untuk membersihkan order basi
+  expireStaleOrders({ batchSize: 20, notifyBuyers: true }).catch(() => null);
 
   const event = await prisma.event.findUnique({
     where: { slug },

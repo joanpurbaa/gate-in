@@ -144,16 +144,19 @@ model Order {
   totalAmount   Int
   holdToken     String      @unique
   holdExpiresAt DateTime
-  paymentRef    String?
-  paidAt        DateTime?
-  waStatus      WaStatus?
-  waError       String?
-  createdAt     DateTime    @default(now())
+  paymentRef        String?
+  paidAt            DateTime?
+  expiredAt         DateTime?
+  expiredNotifiedAt DateTime?
+  waStatus          WaStatus?
+  waError           String?
+  createdAt         DateTime    @default(now())
 
   seats   Seat[]
   tickets Ticket[]
 
   @@index([eventId, status])
+  @@index([status, holdExpiresAt])
 }
 
 model Ticket {

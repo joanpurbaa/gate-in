@@ -1,5 +1,7 @@
 import { prisma } from "./db.ts";
 import { generateHoldToken, generateOrderId, generateTicketCode } from "./qr.ts";
+import { dispatchSeatsReleased } from "./events/seat-events.ts";
+import { sendOrderExpiredWhatsApp } from "./wa.ts";
 
 export const HOLD_DURATION_MS = 10 * 60 * 1000; // 10 menit
 
@@ -170,8 +172,8 @@ export async function releaseOrderHold(
   nextOrderStatus: "FAILED" | "EXPIRED" = "FAILED"
 ): Promise<{ releasedSeats: number; status: "FAILED" | "EXPIRED" | "PAID" }> {
   return prisma.$transaction(async (tx) => {
-    const rows = await tx.$queryRaw<{ id: string; status: string; holdToken: string }[]>`
-      SELECT "id", "status"::text AS "status", "holdToken"
+    const rows = await tx.$queryRaw<{ id: string; eventId: string; status: string; holdToken: string }[]>`
+      SELECT "id", "eventId", "status"::text AS "status", "holdToken"
       FROM "Order"
       WHERE "id" = ${orderId}
       FOR UPDATE
@@ -184,7 +186,7 @@ export async function releaseOrderHold(
       return { releasedSeats: 0, status: "PAID" as const };
     }
 
-    const releasedCount = await tx.$executeRaw`
+    const releasedSeats = await tx.$queryRaw<{ id: string; label: string; zoneId: string | null }[]>`
       UPDATE "Seat"
       SET "status" = 'AVAILABLE'::"SeatStatus",
           "heldUntil" = NULL,
@@ -192,17 +194,32 @@ export async function releaseOrderHold(
           "orderId" = NULL
       WHERE "holdToken" = ${order.holdToken}
         AND "status" = 'HELD'::"SeatStatus"
+      RETURNING "id", "label", "zoneId"
     `;
 
     const finalStatus = order.status === "EXPIRED" ? "EXPIRED" : nextOrderStatus;
+    const now = new Date();
     if (order.status === "PENDING") {
       await tx.order.update({
         where: { id: orderId },
-        data: { status: finalStatus },
+        data: {
+          status: finalStatus,
+          ...(finalStatus === "EXPIRED" ? { expiredAt: now } : {}),
+        },
       });
     }
 
-    return { releasedSeats: Number(releasedCount), status: finalStatus };
+    if (releasedSeats.length > 0) {
+      await dispatchSeatsReleased({
+        eventId: order.eventId,
+        orderId,
+        reason: finalStatus === "EXPIRED" ? "EXPIRED" : "CANCELLED",
+        releasedSeats,
+        timestamp: now,
+      });
+    }
+
+    return { releasedSeats: releasedSeats.length, status: finalStatus };
   });
 }
 
@@ -216,7 +233,7 @@ export async function confirmOrderSold(orderId: string): Promise<{
   orderId: string;
   tickets: { id: string; code: string; seatId: string; seatLabel: string }[];
 }> {
-  return prisma.$transaction(async (tx) => {
+  const result = await prisma.$transaction(async (tx) => {
     const rows = await tx.$queryRaw<
       {
         id: string;
@@ -224,9 +241,10 @@ export async function confirmOrderSold(orderId: string): Promise<{
         status: string;
         totalAmount: number;
         holdToken: string;
+        holdExpiresAt: Date;
       }[]
     >`
-      SELECT "id", "eventId", "status"::text AS "status", "totalAmount", "holdToken"
+      SELECT "id", "eventId", "status"::text AS "status", "totalAmount", "holdToken", "holdExpiresAt"
       FROM "Order"
       WHERE "id" = ${orderId}
       FOR UPDATE
@@ -243,6 +261,7 @@ export async function confirmOrderSold(orderId: string): Promise<{
         include: { seat: { select: { label: true } } },
       });
       return {
+        status: "PAID" as const,
         alreadyPaid: true,
         orderId,
         tickets: existingTickets.map((t) => ({
@@ -267,6 +286,8 @@ export async function confirmOrderSold(orderId: string): Promise<{
       );
     }
 
+    const now = new Date();
+
     // Kunci semua kursi yang masih memegang holdToken pesanan ini
     const heldSeats = await tx.$queryRaw<
       { id: string; label: string; price: number }[]
@@ -283,9 +304,9 @@ export async function confirmOrderSold(orderId: string): Promise<{
 
     const heldSum = heldSeats.reduce((acc, s) => acc + Number(s.price), 0);
 
-    // Jika tidak ada kursi atau sebagian kursi sudah diambil orang lain setelah hold kedaluwarsa
+    // 1. Jika kursi sudah diambil orang lain setelah hold kedaluwarsa (token berganti) -> HOLD_TAKEN
     if (heldSeats.length === 0 || heldSum !== order.totalAmount) {
-      await tx.$executeRaw`
+      const releasedSeats = await tx.$queryRaw<{ id: string; label: string; zoneId: string | null }[]>`
         UPDATE "Seat"
         SET "status" = 'AVAILABLE'::"SeatStatus",
             "heldUntil" = NULL,
@@ -293,15 +314,44 @@ export async function confirmOrderSold(orderId: string): Promise<{
             "orderId" = NULL
         WHERE "holdToken" = ${order.holdToken}
           AND "status" = 'HELD'::"SeatStatus"
+        RETURNING "id", "label", "zoneId"
       `;
       await tx.order.update({
         where: { id: orderId },
-        data: { status: "EXPIRED" },
+        data: { status: "EXPIRED", expiredAt: now },
       });
-      throw new OrderHoldInvalidError(
-        "HOLD_TAKEN",
-        "Masa tahan kursi sudah habis dan kursi telah diambil pengunjung lain. Kursi tidak dijual dua kali."
-      );
+
+      return {
+        status: "HOLD_TAKEN" as const,
+        orderId,
+        eventId: order.eventId,
+        releasedSeats,
+      };
+    }
+
+    // 2. Jika kursi belum diambil orang lain tapi waktu sudah kedaluwarsa -> ORDER_EXPIRED
+    if (order.holdExpiresAt <= now) {
+      const releasedSeats = await tx.$queryRaw<{ id: string; label: string; zoneId: string | null }[]>`
+        UPDATE "Seat"
+        SET "status" = 'AVAILABLE'::"SeatStatus",
+            "heldUntil" = NULL,
+            "holdToken" = NULL,
+            "orderId" = NULL
+        WHERE "holdToken" = ${order.holdToken}
+          AND "status" = 'HELD'::"SeatStatus"
+        RETURNING "id", "label", "zoneId"
+      `;
+      await tx.order.update({
+        where: { id: orderId },
+        data: { status: "EXPIRED", expiredAt: now },
+      });
+
+      return {
+        status: "EXPIRED" as const,
+        orderId,
+        eventId: order.eventId,
+        releasedSeats,
+      };
     }
 
     // Ubah semua kursi menjadi SOLD dalam satu statement atomik
@@ -323,7 +373,6 @@ export async function confirmOrderSold(orderId: string): Promise<{
       );
     }
 
-    const now = new Date();
     const paymentRef = `SIM-${now.getTime().toString(36).toUpperCase()}`;
 
     await tx.order.update({
@@ -366,9 +415,225 @@ export async function confirmOrderSold(orderId: string): Promise<{
     }
 
     return {
+      status: "PAID" as const,
       alreadyPaid: false,
       orderId,
       tickets: createdTickets,
     };
   });
+
+  // Jika transaksi mendeteksi kedaluwarsa atau kursi telah diambil, dispatch event dan lempar error
+  if (result.status === "EXPIRED") {
+    if (result.releasedSeats && result.releasedSeats.length > 0) {
+      await dispatchSeatsReleased({
+        eventId: result.eventId!,
+        orderId: result.orderId,
+        reason: "EXPIRED",
+        releasedSeats: result.releasedSeats,
+        timestamp: new Date(),
+      });
+    }
+    throw new OrderHoldInvalidError(
+      "ORDER_EXPIRED",
+      "Waktu reservasi telah habis (melewati 10 menit). Kursi telah dilepas dan pembayaran ditolak."
+    );
+  }
+
+  if (result.status === "HOLD_TAKEN") {
+    if (result.releasedSeats && result.releasedSeats.length > 0) {
+      await dispatchSeatsReleased({
+        eventId: result.eventId!,
+        orderId: result.orderId,
+        reason: "EXPIRED",
+        releasedSeats: result.releasedSeats,
+        timestamp: new Date(),
+      });
+    }
+    throw new OrderHoldInvalidError(
+      "HOLD_TAKEN",
+      "Masa tahan kursi sudah habis dan kursi telah diambil pengunjung lain. Kursi tidak dijual dua kali."
+    );
+  }
+
+  return {
+    alreadyPaid: result.alreadyPaid ?? false,
+    orderId: result.orderId,
+    tickets: result.tickets ?? [],
+  };
+}
+
+export interface ExpireStaleOrdersOptions {
+  batchSize?: number;
+  notifyBuyers?: boolean;
+  requestOrigin?: string;
+}
+
+export interface ExpiredOrderSummary {
+  orderId: string;
+  eventId: string;
+  buyerName: string;
+  buyerPhone: string;
+  releasedSeatCount: number;
+  releasedSeatLabels: string[];
+  waNotificationStatus: "SENT" | "FAILED" | "SKIPPED" | "ALREADY_NOTIFIED";
+}
+
+export interface ExpireStaleOrdersResult {
+  sweptCount: number;
+  releasedSeatTotal: number;
+  orders: ExpiredOrderSummary[];
+  durationMs: number;
+}
+
+/**
+ * Expiration Engine utama:
+ * Memindai dan memulihkan seluruh pesanan PENDING yang telah melewati holdExpiresAt (server time).
+ * Memakai PostgreSQL `FOR UPDATE SKIP LOCKED` sehingga aman dijalankan oleh multiple background worker
+ * / cron jobs secara paralel tanpa deadlock atau race condition.
+ */
+export async function expireStaleOrders(
+  options: ExpireStaleOrdersOptions = {}
+): Promise<ExpireStaleOrdersResult> {
+  const startTime = Date.now();
+  const batchSize = Math.max(1, Math.min(options.batchSize ?? 100, 500));
+  const notifyBuyers = options.notifyBuyers ?? true;
+  const now = new Date();
+
+  // 1. Ambil dan kunci pesanan kedaluwarsa dengan SKIP LOCKED dalam transaksi atomik
+  const processedOrders = await prisma.$transaction(
+    async (tx) => {
+      const expiredOrders = await tx.$queryRaw<
+        {
+          id: string;
+          eventId: string;
+          holdToken: string;
+          buyerName: string;
+          buyerPhone: string;
+          expiredNotifiedAt: Date | null;
+        }[]
+      >`
+        SELECT "id", "eventId", "holdToken", "buyerName", "buyerPhone", "expiredNotifiedAt"
+        FROM "Order"
+        WHERE "status" = 'PENDING'::"OrderStatus"
+          AND "holdExpiresAt" <= ${now}
+        ORDER BY "holdExpiresAt" ASC
+        LIMIT ${batchSize}
+        FOR UPDATE SKIP LOCKED
+      `;
+
+      if (expiredOrders.length === 0) {
+        return [];
+      }
+
+      const orderSummaries: Array<{
+        orderId: string;
+        eventId: string;
+        buyerName: string;
+        buyerPhone: string;
+        expiredNotifiedAt: Date | null;
+        releasedSeats: Array<{ id: string; label: string; zoneId: string | null }>;
+      }> = [];
+
+      for (const ord of expiredOrders) {
+        // Ubah status order menjadi EXPIRED dan simpan timestamp expiration
+        await tx.order.update({
+          where: { id: ord.id },
+          data: {
+            status: "EXPIRED",
+            expiredAt: now,
+          },
+        });
+
+        // Kembalikan kursi milik order tersebut menjadi AVAILABLE
+        const releasedSeats = await tx.$queryRaw<
+          { id: string; label: string; zoneId: string | null }[]
+        >`
+          UPDATE "Seat"
+          SET "status" = 'AVAILABLE'::"SeatStatus",
+              "heldUntil" = NULL,
+              "holdToken" = NULL,
+              "orderId" = NULL
+          WHERE "holdToken" = ${ord.holdToken}
+            AND "status" = 'HELD'::"SeatStatus"
+          RETURNING "id", "label", "zoneId"
+        `;
+
+        orderSummaries.push({
+          orderId: ord.id,
+          eventId: ord.eventId,
+          buyerName: ord.buyerName,
+          buyerPhone: ord.buyerPhone,
+          expiredNotifiedAt: ord.expiredNotifiedAt,
+          releasedSeats,
+        });
+
+        // Integrasi modul waiting list: dispatch event kursi dilepas
+        if (releasedSeats.length > 0) {
+          await dispatchSeatsReleased({
+            eventId: ord.eventId,
+            orderId: ord.id,
+            reason: "EXPIRED",
+            releasedSeats,
+            timestamp: now,
+          });
+        }
+      }
+
+      return orderSummaries;
+    },
+    { maxWait: 15000, timeout: 25000 }
+  );
+
+  // 2. Di luar transaksi: kirim notifikasi WhatsApp ke pembeli (non-blocking)
+  const summaries: ExpiredOrderSummary[] = [];
+  let totalSeats = 0;
+
+  for (const ord of processedOrders) {
+    totalSeats += ord.releasedSeats.length;
+    const seatLabels = ord.releasedSeats.map((s) => s.label);
+    let waStatus: "SENT" | "FAILED" | "SKIPPED" | "ALREADY_NOTIFIED" = "SKIPPED";
+
+    if (ord.expiredNotifiedAt) {
+      waStatus = "ALREADY_NOTIFIED";
+    } else if (notifyBuyers) {
+      try {
+        const res = await sendOrderExpiredWhatsApp(
+          ord.orderId,
+          seatLabels,
+          options.requestOrigin
+        );
+        waStatus = res.status;
+      } catch (err) {
+        console.error(
+          `[ExpiredOrderRecovery] Gagal kirim WA ke ${ord.buyerPhone} (non-blocking):`,
+          err
+        );
+        waStatus = "FAILED";
+      }
+    }
+
+    summaries.push({
+      orderId: ord.orderId,
+      eventId: ord.eventId,
+      buyerName: ord.buyerName,
+      buyerPhone: ord.buyerPhone,
+      releasedSeatCount: ord.releasedSeats.length,
+      releasedSeatLabels: seatLabels,
+      waNotificationStatus: waStatus,
+    });
+  }
+
+  const durationMs = Date.now() - startTime;
+  if (processedOrders.length > 0) {
+    console.log(
+      `[ExpiredOrderRecovery] Berhasil memulihkan ${processedOrders.length} pesanan kedaluwarsa, ${totalSeats} kursi dikembalikan ke AVAILABLE (${durationMs}ms)`
+    );
+  }
+
+  return {
+    sweptCount: processedOrders.length,
+    releasedSeatTotal: totalSeats,
+    orders: summaries,
+    durationMs,
+  };
 }

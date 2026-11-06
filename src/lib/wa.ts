@@ -124,3 +124,111 @@ export async function sendOrderWhatsApp(
     clearTimeout(timer);
   }
 }
+
+/**
+ * Kirim notifikasi WhatsApp ke pembeli saat reservasi kursi kedaluwarsa.
+ * Menjelaskan bahwa waktu 10 menit telah habis dan kursi telah kembali ke denah.
+ * Dijamin idempotent: tidak akan mengirim notifikasi berulang jika `expiredNotifiedAt` sudah terisi.
+ * Gagal kirim WhatsApp TIDAK BOLEH menggagalkan proses pelepasan kursi.
+ */
+export async function sendOrderExpiredWhatsApp(
+  orderId: string,
+  releasedSeatLabels: string[] = [],
+  requestOrigin?: string
+): Promise<{ status: "SENT" | "FAILED" | "SKIPPED"; error?: string }> {
+  const token = process.env.FONNTE_TOKEN?.trim();
+  const order = await prisma.order.findUnique({
+    where: { id: orderId },
+    include: {
+      event: true,
+    },
+  });
+
+  if (!order) {
+    return { status: "FAILED", error: "Order tidak ditemukan" };
+  }
+
+  // Cegah notifikasi berulang untuk order yang sama
+  if (order.expiredNotifiedAt) {
+    return { status: "SKIPPED", error: "Notifikasi kedaluwarsa sudah pernah dikirim" };
+  }
+
+  if (!token) {
+    await prisma.order.update({
+      where: { id: orderId },
+      data: { expiredNotifiedAt: new Date() },
+    });
+    return { status: "SKIPPED" };
+  }
+
+  const baseUrl = resolveAppBaseUrl(requestOrigin);
+  const seatsText =
+    releasedSeatLabels.length > 0
+      ? releasedSeatLabels.join(", ")
+      : "yang Anda pilih sebelumnya";
+
+  const message = [
+    `*RESERVASI KEDALUWARSA — GATEIN*`,
+    `Halo *${order.buyerName}*, batas waktu 10 menit untuk menahan kursi acara *${order.event.name}* telah berakhir.`,
+    ``,
+    `Kursi (*${seatsText}*) telah dikembalikan ke denah dan kini dapat dipilih kembali oleh pengunjung lain.`,
+    ``,
+    `📍 *Lokasi:* ${order.event.venueName}`,
+    `🗓 *Jadwal Acara:* ${formatDateTime(order.event.startsAt)}`,
+    ``,
+    `Jika Anda masih berminat menghadiri acara ini, silakan pilih kursi kembali melalui tautan berikut:`,
+    `${baseUrl}/e/${order.event.slug}/beli`,
+    ``,
+    `_Pesan ini dikirim otomatis oleh sistem GateIn._`,
+  ].join("\n");
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 7000);
+
+  try {
+    const form = new URLSearchParams();
+    form.set("target", order.buyerPhone);
+    form.set("message", message);
+
+    const res = await fetch("https://api.fonnte.com/send", {
+      method: "POST",
+      headers: {
+        Authorization: token,
+      },
+      body: form,
+      signal: controller.signal,
+    });
+
+    const data = (await res.json().catch(() => ({}))) as {
+      status?: boolean;
+      reason?: string;
+      detail?: string;
+    };
+
+    const isSuccess = res.ok && data.status !== false;
+
+    await prisma.order.update({
+      where: { id: orderId },
+      data: {
+        expiredNotifiedAt: new Date(),
+        waError: isSuccess ? null : String(data.reason || data.detail || `HTTP ${res.status}`).slice(0, 200),
+      },
+    });
+
+    return isSuccess
+      ? { status: "SENT" }
+      : { status: "FAILED", error: String(data.reason || data.detail) };
+  } catch (err) {
+    const errMsg = err instanceof Error ? err.message : "Gagal menghubungi API Fonnte";
+    await prisma.order.update({
+      where: { id: orderId },
+      data: {
+        expiredNotifiedAt: new Date(),
+        waError: errMsg.slice(0, 200),
+      },
+    });
+    return { status: "FAILED", error: errMsg };
+  } finally {
+    clearTimeout(timer);
+  }
+}
