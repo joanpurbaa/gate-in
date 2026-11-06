@@ -40,6 +40,15 @@ Agent: centang `[x]` setelah tahap lulus `lint` + `build` + verifikasi di `docs/
 - **Schema `neon_auth` bawaan Neon**: dibiarkan tidak tersentuh; semua tabel aplikasi berada di schema `public`.
 - **Atomic Seat Locking (`src/lib/seats.ts`)**: menggunakan satu statement CTE `SELECT ... ORDER BY "id" FOR UPDATE` + `UPDATE "Seat"` untuk mencegah race condition sekaligus mencegah deadlock pada pemilihan multi-kursi. Diuji dengan 8 request paralel di `scripts/test-locking.ts`.
 - **AI Layout Fallback Kuota Free Tier (`src/lib/ai/layout.ts`)**: membaca `GEMINI_MODEL` dari env (`gemini-2.5-flash`) dan bila terkena limit RPM free tier (`429 RESOURCE_EXHAUSTED`), otomatis melakukan retry 1x ke `gemini-2.5-flash-lite` agar demo tidak gagal. Diuji pada 5 skenario di `scripts/test-ai-layout.ts`.
+- **GateIn Express Booking (Alur Pemilihan Kursi Terintegrasi)**:
+  - Mengubah alur pembelian tiket dari model 3 langkah berjenjang menjadi model **Express Booking**:
+    1. Pengunjung masuk ke `/e/[slug]/beli` langsung melihat denah kursi interaktif (`SeatMap`) tanpa form pemesan awal.
+    2. Pemilihan kursi multi-tiket (hingga batas `maxSeatsPerOrder`) diperbarui secara real-time pada bar bawah (`SelectedSeatsBar`).
+    3. Integrated Checkout Drawer (`CheckoutDrawer.tsx`) terintegrasi langsung di atas denah (bottom sheet di mobile, modal dialog di desktop) untuk memasukkan Nama Pemesan dan Nomor WhatsApp aktif (validasi format nomor Indonesia).
+    4. Konfirmasi checkout langsung memicu reservasi atomik server via `POST /api/orders` (`holdSeatsAndCreateOrder` dengan PostgreSQL `SELECT ... FOR UPDATE`).
+    5. Jika berhasil (HTTP 201), pembeli langsung di-redirect ke halaman pembayaran `/bayar/[orderId]` tanpa redundansi langkah ringkasan perantara.
+    6. Jika terjadi bentrok kursi (HTTP 409 `SEATS_TAKEN`), pembeli menerima feedback jelas, kursi yang bentrok otomatis dikeluarkan dari seleksi, dan denah kursi disinkronkan secara otomatis.
+    7. Seluruh skrip uji (`test-locking.ts`, `test-checkin.ts`, `verify-e2e.ts`) lulus 100%.
 - **Tahap 11 (Beranda Marketplace & Data Realistis)**:
   - Skema database: migrasi `20261106091032_add_event_category_and_featured` sukses menambahkan `EventCategory` (MUSIC, TECH, ARTS, EDUCATION, COMMUNITY, SPORTS), kolom `category` (default `COMMUNITY`), `isFeatured` (default `false`), dan `organizerName` (opsional).
   - Seed 8 acara realistis Summarecon Mall Bandung sukses dijalankan idempotent dengan waktu bulat WIB wajar (09.00, 10.00, 13.00, 15.00, 16.00, 19.00, 19.30 WIB). Seluruh kursi SOLD memiliki pesanan PAID dan tiket VALID/USED. Tiket demo `DEMO000VLD` (C-8), `DEMO000USD` (C-9), dan kursi uji balapan `E-5`, `E-6`, `E-7` tetap utuh.

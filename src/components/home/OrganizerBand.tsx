@@ -1,6 +1,5 @@
 import React from "react";
 import Link from "next/link";
-import { Sparkles } from "lucide-react";
 
 export function OrganizerBand() {
   return (
@@ -10,12 +9,12 @@ export function OrganizerBand() {
     >
       <div className="flex flex-col items-start justify-between gap-6 md:flex-row md:items-center">
         <div className="max-w-2xl">
-          <div className="flex items-center gap-2 text-ticket">
+          {/* <div className="flex items-center gap-2 text-ticket">
             <Sparkles className="h-4 w-4" />
             <span className="text-xs font-bold uppercase tracking-wider">
               Untuk Penyelenggara
             </span>
-          </div>
+          </div> */}
 
           <h2 className="mt-2 font-display text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
             Punya acara? Foto ruangannya, denah kursinya jadi otomatis.
