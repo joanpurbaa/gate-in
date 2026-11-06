@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
+import React, { useEffect } from "react";
 import {
   AlertCircle,
   Calendar,
@@ -48,10 +48,9 @@ export function CheckoutDrawer({
   isSubmitting,
   errorMessage,
 }: CheckoutDrawerProps) {
-  const nameInputRef = useRef<HTMLInputElement>(null);
   const totalAmount = selectedSeats.reduce((acc, s) => acc + s.price, 0);
 
-  // Kunci scroll latar dan fokus input saat terbuka
+  // Kunci scroll latar dan tangani Escape saat terbuka
   useEffect(() => {
     if (!isOpen) return;
 
@@ -65,15 +64,9 @@ export function CheckoutDrawer({
     };
     window.addEventListener("keydown", handleKeyDown);
 
-    // Fokus ke kolom nama setelah modal dirender
-    const timer = setTimeout(() => {
-      nameInputRef.current?.focus();
-    }, 100);
-
     return () => {
       document.body.style.overflow = originalOverflow;
       window.removeEventListener("keydown", handleKeyDown);
-      clearTimeout(timer);
     };
   }, [isOpen, isSubmitting, onClose]);
 
@@ -209,10 +202,10 @@ export function CheckoutDrawer({
                     <User className="h-4 w-4" />
                   </div>
                   <input
-                    ref={nameInputRef}
                     id="checkout-buyer-name"
                     type="text"
                     required
+                    autoFocus
                     disabled={isSubmitting}
                     placeholder="Contoh: Budi Santoso"
                     value={buyerName}

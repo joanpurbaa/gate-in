@@ -224,6 +224,13 @@ export function BookingFlowClient({
     }
   };
 
+  const handleCloseCheckout = useCallback(() => {
+    if (!submittingHold) {
+      setIsCheckoutOpen(false);
+      setFormError(null);
+    }
+  }, [submittingHold]);
+
   return (
     <main className="mx-auto max-w-5xl px-4 py-5 pb-28">
       {/* Header Denah Pemilihan Kursi */}
@@ -318,12 +325,7 @@ export function BookingFlowClient({
       {/* Drawer / Modal Checkout Terintegrasi */}
       <CheckoutDrawer
         isOpen={isCheckoutOpen}
-        onClose={() => {
-          if (!submittingHold) {
-            setIsCheckoutOpen(false);
-            setFormError(null);
-          }
-        }}
+        onClose={handleCloseCheckout}
         event={{
           name: event.name,
           venueName: event.venueName,
