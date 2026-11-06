@@ -278,12 +278,12 @@ export function AnalyticsClient({ initialData, events }: AnalyticsClientProps) {
           {compareWithPrevious && period !== "all" && (
             <div className="mt-1 flex items-center gap-1 text-[11px]">
               {data.overview.grossRevenue.trend === "up" ? (
-                <span className="inline-flex items-center font-bold text-emerald-600 dark:text-emerald-400">
+                <span className="inline-flex items-center font-bold text-emerald-700">
                   <ArrowUpRight className="h-3.5 w-3.5" />
                   +{data.overview.grossRevenue.percentageChange}%
                 </span>
               ) : data.overview.grossRevenue.trend === "down" ? (
-                <span className="inline-flex items-center font-bold text-rose-600 dark:text-rose-400">
+                <span className="inline-flex items-center font-bold text-rose-700">
                   <ArrowDownRight className="h-3.5 w-3.5" />
                   {data.overview.grossRevenue.percentageChange}%
                 </span>
@@ -310,12 +310,12 @@ export function AnalyticsClient({ initialData, events }: AnalyticsClientProps) {
           {compareWithPrevious && period !== "all" && (
             <div className="mt-1 flex items-center gap-1 text-[11px]">
               {data.overview.ticketsSold.trend === "up" ? (
-                <span className="inline-flex items-center font-bold text-emerald-600 dark:text-emerald-400">
+                <span className="inline-flex items-center font-bold text-emerald-700">
                   <ArrowUpRight className="h-3.5 w-3.5" />
                   +{data.overview.ticketsSold.percentageChange}%
                 </span>
               ) : data.overview.ticketsSold.trend === "down" ? (
-                <span className="inline-flex items-center font-bold text-rose-600 dark:text-rose-400">
+                <span className="inline-flex items-center font-bold text-rose-700">
                   <ArrowDownRight className="h-3.5 w-3.5" />
                   {data.overview.ticketsSold.percentageChange}%
                 </span>
@@ -367,32 +367,57 @@ export function AnalyticsClient({ initialData, events }: AnalyticsClientProps) {
             <span>Actionable Insights & Rekomendasi</span>
           </div>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {data.insights.map((insight) => (
-              <div
-                key={insight.id}
-                className={`rounded-2xl border p-4 text-xs transition shadow-xs ${
-                  insight.type === "success"
-                    ? "border-emerald-500/30 bg-emerald-50/70 text-emerald-950 dark:bg-emerald-950/20 dark:text-emerald-200"
-                    : insight.type === "warning"
-                      ? "border-amber-500/30 bg-amber-50/70 text-amber-950 dark:bg-amber-950/20 dark:text-amber-200"
-                      : insight.type === "trend"
-                        ? "border-indigo-500/30 bg-indigo-50/70 text-indigo-950 dark:bg-indigo-950/20 dark:text-indigo-200"
-                        : "border-gate/20 bg-gate/5 text-ink"
-                }`}
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <span className="font-bold">{insight.title}</span>
-                  {insight.metric && (
-                    <span className="rounded-full bg-card px-2 py-0.5 text-[10px] font-extrabold shadow-xs">
-                      {insight.metric}
-                    </span>
-                  )}
+            {data.insights.map((insight) => {
+              const theme =
+                insight.type === "success"
+                  ? {
+                      container: "border-emerald-300 bg-emerald-50/90",
+                      title: "text-emerald-950",
+                      badge: "bg-emerald-700 text-white",
+                      message: "text-emerald-900",
+                    }
+                  : insight.type === "warning"
+                    ? {
+                        container: "border-amber-300 bg-amber-50/90",
+                        title: "text-amber-950",
+                        badge: "bg-amber-700 text-white",
+                        message: "text-amber-900",
+                      }
+                    : insight.type === "trend"
+                      ? {
+                          container: "border-indigo-300 bg-indigo-50/90",
+                          title: "text-indigo-950",
+                          badge: "bg-indigo-700 text-white",
+                          message: "text-indigo-900",
+                        }
+                      : {
+                          container: "border-line bg-page",
+                          title: "text-ink",
+                          badge: "bg-gate text-white",
+                          message: "text-muted",
+                        };
+
+              return (
+                <div
+                  key={insight.id}
+                  className={`rounded-2xl border p-4 text-xs transition shadow-xs ${theme.container}`}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <span className={`font-bold leading-snug ${theme.title}`}>{insight.title}</span>
+                    {insight.metric && (
+                      <span
+                        className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-extrabold shadow-2xs ${theme.badge}`}
+                      >
+                        {insight.metric}
+                      </span>
+                    )}
+                  </div>
+                  <p className={`mt-2 text-[11px] font-medium leading-relaxed ${theme.message}`}>
+                    {insight.message}
+                  </p>
                 </div>
-                <p className="mt-1.5 text-[11px] leading-relaxed opacity-90">
-                  {insight.message}
-                </p>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </section>
       )}
@@ -549,7 +574,7 @@ export function AnalyticsClient({ initialData, events }: AnalyticsClientProps) {
                 </div>
                 <div>
                   <span className="text-muted">Gross Revenue:</span>
-                  <div className="font-bold text-emerald-600 dark:text-emerald-400">
+                  <div className="font-bold text-emerald-700">
                     {formatRupiah(zone.revenue)}
                   </div>
                 </div>
@@ -739,13 +764,13 @@ export function AnalyticsClient({ initialData, events }: AnalyticsClientProps) {
             </div>
             <div className="rounded-xl border border-line bg-page p-3">
               <span className="text-muted">Kursi Terjual (SOLD)</span>
-              <div className="font-bold text-emerald-600 dark:text-emerald-400 text-base">
+              <div className="font-bold text-emerald-700 text-base">
                 {data.occupancy.soldSeats} kursi
               </div>
             </div>
             <div className="rounded-xl border border-line bg-page p-3">
               <span className="text-muted">Sedang Di-hold (HELD)</span>
-              <div className="font-bold text-amber-600 dark:text-amber-400 text-base">
+              <div className="font-bold text-amber-700 text-base">
                 {data.occupancy.heldSeats} kursi
               </div>
             </div>
@@ -819,7 +844,7 @@ export function AnalyticsClient({ initialData, events }: AnalyticsClientProps) {
                 Statistik pemindaian tiket pada pintu masuk (check-in).
               </p>
             </div>
-            <div className="font-display text-xl font-extrabold text-emerald-600 dark:text-emerald-400">
+            <div className="font-display text-xl font-extrabold text-emerald-700">
               {data.attendance.attendanceRate}%
             </div>
           </div>
@@ -831,11 +856,11 @@ export function AnalyticsClient({ initialData, events }: AnalyticsClientProps) {
                 {data.attendance.totalSoldTickets}
               </div>
             </div>
-            <div className="rounded-xl border border-emerald-500/20 bg-emerald-50/50 dark:bg-emerald-950/20 p-3">
-              <span className="text-[11px] text-emerald-800 dark:text-emerald-300">
+            <div className="rounded-xl border border-emerald-500/20 bg-emerald-50/70 p-3">
+              <span className="text-[11px] font-semibold text-emerald-900">
                 Sudah Hadir
               </span>
-              <div className="mt-0.5 font-bold text-emerald-600 dark:text-emerald-400">
+              <div className="mt-0.5 font-bold text-emerald-700">
                 {data.attendance.checkedInCount}
               </div>
             </div>
