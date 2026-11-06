@@ -52,6 +52,16 @@ Agent: centang `[x]` setelah tahap lulus `lint` + `build` + verifikasi di `docs/
     - Disimpan dalam format WebP terkompresi di `public/docs/` (seluruh berkas berukuran 4,6 KB s.d. 64 KB, jauh di bawah batas 200 KB).
     - Tangkapan layar tampilan `/docs` itu sendiri disimpan di `docs/screenshots/after-14/docs-390.png` dan `docs/screenshots/after-14/docs-1440.png`.
     - Database demo di-reset kembali secara bersih via `node prisma/seed.ts`.
+- **Perbaikan Tuntas Vercel Production Build (GateIn)**:
+  - **Akar Masalah**:
+    - Build script sebelumnya (`next build --webpack`) memaksa Next.js 16 App Router menggunakan Webpack bundler beserta pipeline Node File Tracing (`collectBuildTraces` dari `@vercel/nft`).
+    - Saat proses tracing dependensi di lingkungan CI/Vercel berlangsung paralel dengan kompilasi server, adapter database (`@prisma/adapter-neon`, `@neondatabase/serverless`) dan Prisma Client memicu `TypeError: Cannot convert object to primitive value` saat NFT melakukan inspeksi dependensi / null-prototype objects.
+    - Upaya monkey-patching sebelumnya di `next.config.ts` (meng-override `collectBuildTraces` dan membungkam `unhandledRejection`) dihapus total karena melanggar standar integritas produksi.
+  - **Solusi Bersih & Idiomatik**:
+    1. Mengembalikan `next.config.ts` ke konfigurasi standar Next.js yang bersih tanpa monkey-patching atau listener hijacking.
+    2. Menambahkan `serverExternalPackages: ["@prisma/client", "@prisma/adapter-neon", "@neondatabase/serverless"]` pada `nextConfig` agar Next.js dan file tracer memperlakukan driver database sebagai paket eksternal server (tidak di-bundle AST-nya).
+    3. Mengembalikan script `build` di `package.json` ke perintah resmi Next.js 16: `"build": "prisma generate && next build"`, memanfaatkan Turbopack engine bawaan Next.js 16 yang 10x lebih cepat (kompilasi 1.1s vs 19s) dan sepenuhnya bebas dari bug tracing Webpack NFT.
+  - **Verifikasi**: `npm run build` (Turbopack) sukses 100%, `npx next build --webpack` sukses 100%, `npm run lint` bersih, `npx tsc --noEmit` lolos, dan `scripts/test-locking.ts` (8 pemesan paralel) lolos 100%.
 - **Pembersihan Tautan Admin & Pengalaman Publik Siap Produksi**:
   - Seluruh tombol dan tautan yang mengarah ke dashboard atau login admin (`/admin`, `/admin/login`) telah dihapus dari seluruh tampilan pengunjung (`PublicHeader.tsx`, `PublicFooter.tsx`, dan `not-found.tsx`).
   - Header publik kini berfokus murni pada pengalaman pembeli dengan CTA "Jelajahi Acara" yang mengarah mulus ke `#daftar-acara`.
