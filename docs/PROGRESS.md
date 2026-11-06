@@ -58,6 +58,9 @@ Agent: centang `[x]` setelah tahap lulus `lint` + `build` + verifikasi di `docs/
     - Seluruh kalkulasi dan agregasi dijalankan di server dengan kueri Prisma teroptimasi tanpa isu $N+1$.
     - Proteksi otorisasi sesi admin dan isolasi kepemilikan acara (`event.organizerId`).
     - Pengujian otomatis `scripts/test-analytics.ts` lulus 100% pada seluruh 8 skenario pengujian.
+  - **Peningkatan Kontras Actionable Insights**:
+    - Memperbaiki kontras teks kartu rekomendasi dengan membuang kelas `dark:` yang terpicu oleh tema gelap sistem operasi pemakai (sehingga sebelumnya menghasilkan teks warna pastel muda pucat di atas latar putih).
+    - Memperbarui gaya kartu dengan judul tebal bergradasi pekat (`text-emerald-950`, `text-amber-950`, `text-indigo-950`), isi pesan berkontras tinggi (`text-emerald-900`, `text-amber-900`, `text-indigo-900`), serta lencana badge tebal kontras tinggi (`bg-emerald-700 text-white`, `bg-amber-700 text-white`, dsb.).
 - **Perbaikan Input Focus pada CheckoutDrawer**:
   - Dikonfirmasi dan diuji via headless Chrome: input nama dan nomor telepon di `CheckoutDrawer.tsx` menggunakan controlled state tanpa `autoFocus`, serta dilengkapi atribut `name` dan `autoComplete` standar (`name="buyerName"` `autoComplete="name"`, `name="buyerPhone"` `autoComplete="tel"`).
   - Pengetikan nomor telepon (misal `082...`) mempertahankan fokus sepenuhnya pada kolom nomor WhatsApp tanpa terlempar kembali ke kolom nama.
