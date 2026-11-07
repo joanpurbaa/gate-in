@@ -11,7 +11,6 @@ import {
   Menu,
   Plus,
   Tag,
-  User,
   X,
 } from "lucide-react";
 import { Logo } from "@/components/ui/Logo";
@@ -62,86 +61,107 @@ export function AdminHeader({ organizerName, organizerEmail }: AdminHeaderProps)
     },
   ];
 
+  const userInitial = organizerName ? organizerName.trim().charAt(0).toUpperCase() : "P";
+
   return (
     <>
       <header className="sticky top-0 z-30 border-b border-line bg-card/95 backdrop-blur-md">
-        <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-3 px-4">
-          {/* Sisi Kiri: Logo & Badge Panitia */}
-          <div className="flex items-center gap-3 shrink-0">
-            <Link href="/admin" className="flex items-center gap-2 font-bold text-ink">
+        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6">
+          {/* Sisi Kiri: Logo Brand & Navigasi Desktop */}
+          <div className="flex items-center gap-6 shrink-0">
+            <Link
+              href="/admin"
+              className="flex items-center gap-2.5 font-bold text-ink shrink-0 group focus:outline-none"
+            >
               <Logo size="sm" />
-              <span className="rounded-full bg-gate/10 px-2.5 py-0.5 text-xs font-semibold text-gate">
+              <span className="rounded-full bg-gate/10 border border-gate/20 px-2.5 py-0.5 text-[11px] font-bold text-gate tracking-wide">
                 Panitia
               </span>
             </Link>
 
-            {/* Nama Penyelenggara (Hanya tampil di layar desktop lebar agar tidak sesak di tablet) */}
-            <span className="hidden xl:inline-flex items-center gap-1.5 rounded-full border border-line bg-page px-3 py-0.5 text-xs text-muted max-w-[280px] truncate">
-              <span className="font-semibold text-ink truncate">{organizerName}</span>
-              <span className="text-muted/60">({organizerEmail})</span>
-            </span>
+            {/* Menu Navigasi Desktop: 1 Baris Rapi, Bersih, Tanpa Wrap */}
+            <nav className="hidden md:flex items-center gap-1">
+              {navLinks.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold whitespace-nowrap transition-colors ${
+                      item.active
+                        ? "bg-gate/10 text-gate font-bold"
+                        : "text-muted hover:bg-page hover:text-ink"
+                    }`}
+                  >
+                    <Icon className="h-4 w-4 shrink-0" />
+                    <span>{item.label}</span>
+                  </Link>
+                );
+              })}
+            </nav>
           </div>
 
-          {/* Sisi Kanan: Navigasi Desktop Penuh (Layar Desktop >= 1024px) */}
-          <nav className="hidden lg:flex items-center gap-2 text-xs font-semibold">
-            {navLinks.map((item) => {
-              const Icon = item.icon;
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`inline-flex items-center gap-1.5 rounded-button border px-3 py-1.5 transition ${
-                    item.active
-                      ? "border-gate/20 bg-gate/10 text-gate font-bold"
-                      : "border-line bg-page text-ink hover:bg-gate/5 hover:text-gate"
-                  }`}
-                >
-                  <Icon className="h-3.5 w-3.5" />
-                  <span>{item.label}</span>
-                </Link>
-              );
-            })}
-
+          {/* Sisi Kanan: Aksi Cepat & Profil Akun (Desktop) */}
+          <div className="hidden md:flex items-center gap-2.5 shrink-0">
             <Link
               href="/admin/events/new"
-              className="inline-flex items-center gap-1.5 rounded-button bg-gate px-3.5 py-1.5 text-white transition hover:bg-gate-strong shadow-2xs font-semibold"
+              className="inline-flex items-center gap-1.5 rounded-button bg-gate px-3.5 py-2 text-xs font-semibold text-white whitespace-nowrap transition hover:bg-gate-strong shadow-2xs shrink-0"
             >
-              <Plus className="h-3.5 w-3.5" />
+              <Plus className="h-4 w-4 shrink-0" />
               <span>Buat acara</span>
             </Link>
-
-            <div className="h-4 w-px bg-line mx-1" />
 
             <Link
               href="/"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 rounded-button border border-line bg-page px-2.5 py-1.5 text-ink transition hover:bg-line/50"
-              title="Buka Website Publik GateIn"
+              className="inline-flex items-center gap-1.5 rounded-button border border-line bg-page px-3 py-2 text-xs font-semibold text-ink whitespace-nowrap transition hover:bg-line/50 shrink-0"
+              title="Buka Website Publik GateIn di tab baru"
             >
               <span>Web publik</span>
-              <ExternalLink className="h-3.5 w-3.5 text-muted" />
+              <ExternalLink className="h-3.5 w-3.5 text-muted shrink-0" />
             </Link>
 
+            <div className="h-5 w-px bg-line mx-1 shrink-0" />
+
+            {/* Profil Penyelenggara di Ujung Kanan */}
+            <div
+              className="flex items-center gap-2.5 rounded-full border border-line bg-page/80 py-1 pl-1.5 pr-3 text-xs shrink-0"
+              title={`${organizerName} (${organizerEmail})`}
+            >
+              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-gate text-white font-bold text-xs shrink-0 shadow-2xs">
+                {userInitial}
+              </div>
+              <div className="flex flex-col text-left">
+                <span className="font-bold text-ink max-w-[140px] truncate leading-tight">
+                  {organizerName}
+                </span>
+                <span className="text-[10px] text-muted max-w-[140px] truncate leading-tight">
+                  {organizerEmail}
+                </span>
+              </div>
+            </div>
+
+            {/* Tombol Logout */}
             <button
               type="button"
               onClick={handleLogout}
-              className="inline-flex items-center gap-1.5 rounded-button border border-line bg-card px-2.5 py-1.5 text-ink transition hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-button border border-line bg-card text-muted transition hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200 shrink-0"
               title="Keluar dari akun panitia"
+              aria-label="Keluar"
             >
-              <LogOut className="h-3.5 w-3.5 text-muted hover:text-rose-700" />
-              <span>Keluar</span>
+              <LogOut className="h-4 w-4 shrink-0" />
             </button>
-          </nav>
+          </div>
 
-          {/* Sisi Kanan: Tampilan Tablet & Mobile (< 1024px) */}
-          <div className="flex lg:hidden items-center gap-2">
+          {/* Sisi Kanan: Tampilan Mobile (< 768px) */}
+          <div className="flex md:hidden items-center gap-2 shrink-0">
             <Link
               href="/admin/events/new"
-              className="inline-flex items-center gap-1 rounded-button bg-gate px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-gate-strong shadow-2xs"
+              className="inline-flex items-center gap-1 rounded-button bg-gate px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-gate-strong shadow-2xs whitespace-nowrap"
             >
-              <Plus className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Buat acara</span>
+              <Plus className="h-3.5 w-3.5 shrink-0" />
+              <span>Buat acara</span>
             </Link>
 
             <button
@@ -160,13 +180,13 @@ export function AdminHeader({ organizerName, organizerEmail }: AdminHeaderProps)
           </div>
         </div>
 
-        {/* Dropdown Menu Mobile & Tablet (< 1024px) */}
+        {/* Dropdown Menu Mobile (< 768px) */}
         {mobileMenuOpen && (
-          <div className="border-t border-line bg-card px-4 py-4 shadow-xl lg:hidden animate-in fade-in slide-in-from-top-2 duration-200">
+          <div className="border-t border-line bg-card px-4 py-4 shadow-xl md:hidden animate-in fade-in slide-in-from-top-2 duration-200">
             {/* Info Profil Penyelenggara */}
             <div className="mb-4 flex items-center gap-3 rounded-card border border-line bg-page p-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gate/10 text-gate font-bold text-sm">
-                <User className="h-5 w-5" />
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gate text-white font-bold text-sm shadow-2xs">
+                {userInitial}
               </div>
               <div className="min-w-0 flex-1">
                 <div className="font-display font-bold text-ink text-sm truncate">
@@ -179,7 +199,7 @@ export function AdminHeader({ organizerName, organizerEmail }: AdminHeaderProps)
               </span>
             </div>
 
-            {/* Daftar Navigasi Utama */}
+            {/* Navigasi Utama */}
             <div className="space-y-1.5 text-sm font-semibold">
               {navLinks.map((item) => {
                 const Icon = item.icon;
@@ -226,7 +246,10 @@ export function AdminHeader({ organizerName, organizerEmail }: AdminHeaderProps)
 
                 <button
                   type="button"
-                  onClick={handleLogout}
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    handleLogout();
+                  }}
                   className="flex w-full items-center gap-2.5 rounded-button px-3.5 py-2.5 text-rose-700 hover:bg-rose-50 transition font-semibold mt-1"
                 >
                   <LogOut className="h-4 w-4" />
@@ -242,7 +265,7 @@ export function AdminHeader({ organizerName, organizerEmail }: AdminHeaderProps)
       {mobileMenuOpen && (
         <div
           onClick={() => setMobileMenuOpen(false)}
-          className="fixed inset-0 z-20 bg-ink/20 backdrop-blur-2xs lg:hidden"
+          className="fixed inset-0 z-20 bg-ink/20 backdrop-blur-2xs md:hidden"
           aria-hidden="true"
         />
       )}
