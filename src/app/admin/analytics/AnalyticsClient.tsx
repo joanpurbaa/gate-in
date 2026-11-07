@@ -265,7 +265,7 @@ export function AnalyticsClient({ initialData, events }: AnalyticsClientProps) {
       </section>
 
       {/* Bagian 1: Ringkasan Metrik Kunci (Overview) */}
-      <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <section className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         {/* Gross Revenue */}
         <div className="rounded-2xl border border-line bg-card p-4 shadow-xs">
           <div className="flex items-center justify-between text-muted">

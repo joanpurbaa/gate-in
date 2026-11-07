@@ -52,6 +52,23 @@ Agent: centang `[x]` setelah tahap lulus `lint` + `build` + verifikasi di `docs/
     - Disimpan dalam format WebP terkompresi di `public/docs/` (seluruh berkas berukuran 4,6 KB s.d. 64 KB, jauh di bawah batas 200 KB).
     - Tangkapan layar tampilan `/docs` itu sendiri disimpan di `docs/screenshots/after-14/docs-390.png` dan `docs/screenshots/after-14/docs-1440.png`.
     - Database demo di-reset kembali secara bersih via `node prisma/seed.ts`.
+- **Perbaikan Responsivitas Halaman Admin & Dasbor Penyelenggara**:
+  - **Identifikasi Masalah (Tampilan Tablet / iPad & Mobile)**:
+    - Navbar `AdminHeader` memuat terlalu banyak elemen dalam satu baris horizontal (`h-14`), membuat tombol berdesakan dan teks bertumpuk pada viewport tablet (768px–834px).
+    - Grid kartu metrik (`StatCard`) memaksa 4 kolom di layar sempit (`sm:grid-cols-4`), menyebabkan nominal mata uang panjang (`Rp38.050.000`) terpotong di tepi kartu.
+    - Grid metrik acara pada daftar event memaksakan 5 kolom horizontal di layar tablet.
+  - **Solusi yang Diterapkan**:
+    1. **Navbar Responsif (`AdminHeader.tsx`)**:
+       - Pada layar desktop (≥1024px / `lg`): Menampilkan navbar horizontal lengkap yang lapang.
+       - Pada layar tablet & mobile (<1024px): Menampilkan logo, tombol cepat "+ Buat acara", dan tombol hamburger menu (`Menu` / `X`).
+       - Dropdown menu mobile/tablet menyajikan kartu profil penyelenggara (nama, email, role), daftar navigasi lengkap (Dasbor, Analitik, Kode Promo, Buat Acara, Web Publik), serta tombol logout dengan target sentuh nyaman (min-h-11).
+    2. **Grid & Tipografi Kartu Metrik (`StatCard.tsx`, `page.tsx`, `AnalyticsClient.tsx`, `PromosClient.tsx`)**:
+       - Mengubah grid menjadi `grid-cols-2 lg:grid-cols-4`: pada tablet ditampilkan 2 kolom lapang sehingga nilai mata uang puluhan/ratusan juta tidak pernah terpotong.
+       - `StatCard` dilengkapi ukuran font adaptif (`text-lg sm:text-xl lg:text-2xl`), `tabular-nums`, dan `truncate` dengan atribut `title`.
+    3. **Kartu Acara Responsif**:
+       - Header kartu fleksibel: judul, tanggal, dan tombol aksi (`Detail & denah live`, `Scan check-in`, `Ubah`) tertata rapi.
+       - Grid metrik acara beradaptasi: 2 kolom di mobile, 3 kolom di tablet (`sm`), dan 5 kolom di desktop (`lg`).
+  - **Verifikasi**: `npm run lint` bersih (0 warning, 0 error), `npx tsc --noEmit` lolos, `npm run build` sukses, dan `scripts/test-locking.ts` lolos 100%.
 - **Perbaikan Tuntas Vercel Production Build (GateIn)**:
   - **Akar Masalah**:
     - Build script sebelumnya (`next build --webpack`) memaksa Next.js 16 App Router menggunakan Webpack bundler beserta pipeline Node File Tracing (`collectBuildTraces` dari `@vercel/nft`).

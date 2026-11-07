@@ -78,8 +78,25 @@ export async function POST(request: Request) {
     });
   } catch (err) {
     console.error("[POST /api/admin/upload] error:", err);
+    const message = err instanceof Error ? err.message : String(err);
+    let userFriendlyError = "Gagal mengunggah poster ke Vercel Blob";
+
+    if (message.includes("This store does not exist")) {
+      userFriendlyError =
+        "Vercel Blob: Store tidak ditemukan (This store does not exist). Pastikan Blob Store sudah dibuat di dashboard Vercel dan token BLOB_READ_WRITE_TOKEN di .env disalin lengkap (bukan terpotong).";
+    } else if (
+      message.includes("Unauthorized") ||
+      message.includes("Forbidden") ||
+      message.includes("Invalid token")
+    ) {
+      userFriendlyError =
+        "Vercel Blob: Token tidak valid atau tidak memiliki izin akses (Unauthorized). Periksa kembali nilai BLOB_READ_WRITE_TOKEN di file .env.";
+    } else if (err instanceof Error && err.message) {
+      userFriendlyError = `Gagal mengunggah poster ke Vercel Blob: ${err.message}`;
+    }
+
     return NextResponse.json(
-      { ok: false, error: "Gagal mengunggah poster ke Vercel Blob" },
+      { ok: false, error: userFriendlyError },
       { status: 500 }
     );
   }
