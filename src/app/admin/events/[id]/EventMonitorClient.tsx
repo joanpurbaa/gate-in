@@ -249,30 +249,30 @@ export function EventMonitorClient({
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 shrink-0">
           {event.status === "PUBLISHED" && (
             <>
               <Link
                 href={`/admin/events/${event.id}/checkin`}
-                className="inline-flex min-h-10 items-center gap-1.5 rounded-xl bg-green-700 px-4 py-2 text-xs font-semibold text-white shadow-xs hover:bg-green-800"
+                className="inline-flex min-h-10 items-center gap-1.5 rounded-xl bg-seat-checked px-4 py-2 text-xs font-semibold text-white shadow-2xs hover:bg-seat-checked-edge whitespace-nowrap shrink-0"
               >
-                <QrCode className="h-4 w-4" />
-                <span>Buka Scanner Check-in</span>
+                <QrCode className="h-4 w-4 shrink-0" />
+                <span>Scan Check-in</span>
               </Link>
               <Link
                 href={`/e/${event.slug}`}
-                className="inline-flex min-h-10 items-center gap-1.5 rounded-xl border border-line bg-white px-3.5 py-2 text-xs font-semibold text-ink hover:bg-page"
+                className="inline-flex min-h-10 items-center gap-1.5 rounded-xl border border-line bg-card px-3.5 py-2 text-xs font-semibold text-ink hover:bg-page whitespace-nowrap shrink-0"
               >
                 <span>Halaman Publik</span>
-                <ExternalLink className="h-3.5 w-3.5" />
+                <ExternalLink className="h-3.5 w-3.5 shrink-0 text-muted" />
               </Link>
             </>
           )}
           <Link
             href={`/admin/events/${event.id}/edit`}
-            className="inline-flex min-h-10 items-center gap-1.5 rounded-xl border border-line bg-white px-3.5 py-2 text-xs font-semibold text-ink hover:bg-page"
+            className="inline-flex min-h-10 items-center gap-1.5 rounded-xl border border-line bg-card px-3.5 py-2 text-xs font-semibold text-ink hover:bg-page whitespace-nowrap shrink-0"
           >
-            <Edit3 className="h-3.5 w-3.5" />
+            <Edit3 className="h-3.5 w-3.5 shrink-0 text-muted" />
             <span>Ubah Acara</span>
           </Link>
         </div>

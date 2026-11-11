@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { MapPin, Search, User, X } from "lucide-react";
+import { Search, User, X } from "lucide-react";
 import { Logo } from "./Logo";
 import { authClient } from "@/lib/auth-client";
 
@@ -67,10 +67,10 @@ export function PublicHeader() {
 
           {/* Kanan desktop: chip kota + profil user/masuk */}
           <div className="hidden items-center gap-2.5 md:flex">
-            <span className="inline-flex h-10 items-center gap-1.5 rounded-full border border-line bg-page px-3.5 text-xs font-medium text-ink">
+            {/* <span className="inline-flex h-10 items-center gap-1.5 rounded-full border border-line bg-page px-3.5 text-xs font-medium text-ink">
               <MapPin className="h-3.5 w-3.5 text-gate" aria-hidden="true" />
               <span>Bandung, Summarecon</span>
-            </span>
+            </span> */}
 
             {session?.user ? (
               <Link
@@ -200,10 +200,10 @@ export function PublicHeader() {
           </form>
 
           <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4 text-xs">
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-line bg-card px-3.5 py-2 font-medium text-ink">
+            {/* <span className="inline-flex items-center gap-1.5 rounded-full border border-line bg-card px-3.5 py-2 font-medium text-ink">
               <MapPin className="h-3.5 w-3.5 text-gate" aria-hidden="true" />
               <span>Bandung, Summarecon</span>
-            </span>
+            </span> */}
 
             <Link
               href="/#daftar-acara"
