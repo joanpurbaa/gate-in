@@ -83,6 +83,19 @@ Agent: centang `[x]` setelah tahap lulus `lint` + `build` + verifikasi di `docs/
     - Disimpan dalam format WebP terkompresi di `public/docs/` (seluruh berkas berukuran 4,6 KB s.d. 64 KB, jauh di bawah batas 200 KB).
     - Tangkapan layar tampilan `/docs` itu sendiri disimpan di `docs/screenshots/after-14/docs-390.png` dan `docs/screenshots/after-14/docs-1440.png`.
     - Database demo di-reset kembali secara bersih via `node prisma/seed.ts`.
+- **Perbaikan Masalah CSS Hilang di Produksi Vercel (Tailwind CSS v4 & PostCSS)**:
+  - **Akar Masalah**:
+    - Proyek menggunakan Tailwind CSS v4 (`@import "tailwindcss";`) dengan Next.js 16.
+    - Script `build` di `package.json` menggunakan Webpack (`next build --webpack`) untuk menghindari bug panic proses Turbopack internal di Next.js 16.
+    - Namun, proyek sebelumnya belum memiliki paket `@tailwindcss/postcss` dan berkas konfigurasi `postcss.config.mjs`.
+    - Saat `next dev` di lokal berjalan, Turbopack memproses CSS melalui loader internal. Namun saat `next build --webpack` berjalan di Vercel, Webpack memproses `globals.css` tanpa compiler Tailwind v4, sehingga hanya menghasilkan stub CSS mentah 27 KB (tanpa utilitas `.flex`, `.grid`, `.bg-card`, `.text-ink`, dll.). Akibatnya halaman produksi di Vercel tampil sebagai teks polos tanpa gaya.
+  - **Solusi Tuntas**:
+    1. Memasang paket resmi `@tailwindcss/postcss` (`^4.3.5`).
+    2. Membuat berkas `postcss.config.mjs` yang memuat plugin `@tailwindcss/postcss`.
+    3. Membersihkan konfigurasi loader `turbopack` usang di `next.config.ts`.
+    4. Menguji kompilasi produksi: ukuran berkas CSS melonjak dari 27 KB menjadi **80 KB** dengan seluruh utilitas Tailwind v4 terkompilasi sempurna ke `_next/static/css/`.
+  - **Verifikasi**: `npm run lint` bersih (0 warning, 0 error), `npx tsc --noEmit` lolos, dan `npm run build` sukses 100%.
+
 - **Implementasi Sistem Caching Bawaan Next.js (Tanpa Redis / 3rd Party, Kecepatan Instan)**:
   - **Tujuan**:
     - Meniadakan perenderan ulang database berat pada akses berulang dalam rentang waktu tertentu.
