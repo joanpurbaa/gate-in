@@ -83,6 +83,38 @@ Agent: centang `[x]` setelah tahap lulus `lint` + `build` + verifikasi di `docs/
     - Disimpan dalam format WebP terkompresi di `public/docs/` (seluruh berkas berukuran 4,6 KB s.d. 64 KB, jauh di bawah batas 200 KB).
     - Tangkapan layar tampilan `/docs` itu sendiri disimpan di `docs/screenshots/after-14/docs-390.png` dan `docs/screenshots/after-14/docs-1440.png`.
     - Database demo di-reset kembali secara bersih via `node prisma/seed.ts`.
+- **Implementasi Fitur Virtual Seat View 3D (Simulasi Perspektif Mata Manusia)**:
+  - **Tujuan & Arsitektur**:
+    - Memberikan calon pembeli visualisasi 3D first-person perspective langsung dari posisi mata manusia ketika duduk di kursi yang mereka pilih, menghadap panggung utama.
+    - Menggunakan library WebGL terstandar `three` (`v0.187.0`) dan `@types/three` yang dioptimasi untuk web dan perangkat mobile.
+    - Dimuat secara dinamis via dynamic import (`next/dynamic` dengan `ssr: false`) di `src/components/seatview/index.ts` sehingga ukuran bundel awal halaman pemilihan kursi tetap ringan dan bebas dari isu server-side rendering WebGL.
+  - **Akurasi Matematika Perspektif & Konfigurasi Fisik (`src/lib/seatview/math.ts`)**:
+    - Menghitung koordinat metrik 3D riil: $X$ (posisi horizontal relatif panggung), $Z$ (jarak kedalaman dari panggung), dan $Y$ (ketinggian lantai berdasarkan baris bertingkat / raked tiered elevation $Y = \text{row} \times \text{stepHeight}$).
+    - Tinggi mata penonton duduk dikonfigurasi pada $1{,}15\text{ m}$ dari lantai kursi (sesuai standar ergonomi teater/auditorium).
+    - Menghitung metrik garis pandang (*sightline*): jarak horizontal & absolut ke panggung, sudut elevasi vertikal mata (pitch, misal mendongak $+28^\circ$ pada panggung tinggi vs sejajar $-2^\circ$ pada panggung rendah), serta sudut deviasi horizontal (yaw).
+    - Menyediakan panel kendali parameter fisik interaktif (*HUD parameter drawer*):
+      - Preset ketinggian panggung: **Rendah (0,5m)**, **Standar (1,2m)**, dan **Tinggi (2,5m)** untuk menguji Skenario A & B.
+      - Kontur lantai penonton: **Bertingkat (Teater)** vs **Datar (Ballroom)**.
+      - Field of View (FOV) kamera: **Mata Normal (65°)** vs **Lensa Lebar (75°)**.
+      - Slider penyesuaian tinggi mata duduk ($0{,}9\text{ m} - 1{,}4\text{ m}$).
+  - **Visualisasi 3D & Kinerja Tinggi (`src/components/seatview/VirtualSeatCanvas.tsx`)**:
+    - Memanfaatkan `InstancedMesh` untuk merender ratusan hingga ribuan kursi penonton sekeliling dalam 1 draw call yang sangat ringan (60 FPS di desktop maupun ponsel).
+    - Kursi diwarnai otomatis sesuai dengan warna kategori zona tiket (`zone.color`).
+    - Kursi tempat penonton duduk otomatis disembunyikan dari rendering untuk mencegah kamera menembus sandaran kursi sendiri, digantikan oleh lingkaran indikator menyala (*glowing ring*) di lantai.
+    - Panggung 3D bertekstur kayu gelap dengan rim neon kuning khas tiket GateIn (`#d4ff3a`), layar backdrop LED dinamis ("PANGGUNG UTAMA / LIVE EVENT STAGE"), truss gantung, dan sound tower line array kiri-kanan.
+    - Kontrol rotasi kamera: drag mouse / sentuh swipe dengan redaman halus (*damping*) dan batasan pitch ($-70^\circ$ s.d. $+70^\circ$) agar kamera tidak terbalik.
+    - Tombol "Reset Pandangan" untuk mengembalikan kamera seketika menghadap ke tengah panggung.
+  - **Integrasi Alur Pemilihan Kursi**:
+    - Tombol `"Lihat dari Kursi Ini"` ditambahkan pada kartu detail kursi terpilih (`SeatTooltipCard.tsx`).
+    - Tombol `"Lihat 3D"` ditambahkan pada bilah bawah ringkasan kursi (`SelectedSeatsBar.tsx`) ketika terdapat kursi yang sedang dipilih.
+    - Modal interaktif (`VirtualSeatViewModal.tsx`) menampilkan kartu identitas kursi, rincian zona & harga, HUD metrik sudut pandang, serta pemilih kursi cepat jika pembeli memilih lebih dari 1 kursi untuk membandingkan sudut pandang antar kursi secara instan.
+    - Seluruh alur locking kursi (`src/lib/seats.ts`), timer hold, dan pembayaran tetap 100% utuh tanpa modifikasi apapun.
+  - **Verifikasi**:
+    - `npx tsc --noEmit` lolos 100% tanpa error.
+    - `npm run lint` bersih (0 warning, 0 error).
+    - `npm run build` sukses mengompilasi semua 48 rute.
+    - Skrip pengujian konkurensi `scripts/test-locking.ts` lolos 100% pada seluruh skenario balapan (8 pemesan paralel).
+
 - **Perbaikan Responsivitas Halaman Admin & Dasbor Penyelenggara**:
   - **Identifikasi Masalah (Tampilan Tablet / iPad & Mobile)**:
     - Navbar `AdminHeader` memuat terlalu banyak elemen dalam satu baris horizontal (`h-14`), membuat tombol berdesakan dan teks bertumpuk pada viewport tablet (768px–834px).

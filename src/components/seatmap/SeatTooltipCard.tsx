@@ -1,6 +1,6 @@
 "use client";
 
-import { X } from "lucide-react";
+import { Eye, X } from "lucide-react";
 import { formatRupiah } from "@/lib/money";
 import type { SeatMapItem, SeatMapMode, SeatZoneInfo } from "./types";
 
@@ -11,6 +11,7 @@ interface SeatTooltipCardProps {
   isSelected: boolean;
   canSelectMore: boolean;
   onToggleSelect?: (seat: SeatMapItem) => void;
+  onOpenVirtualView?: (seat: SeatMapItem) => void;
   onClose: () => void;
 }
 
@@ -40,6 +41,7 @@ export function SeatTooltipCard({
   isSelected,
   canSelectMore,
   onToggleSelect,
+  onOpenVirtualView,
   onClose,
 }: SeatTooltipCardProps) {
   const statusInfo = STATUS_LABEL[seat.status];
@@ -101,6 +103,18 @@ export function SeatTooltipCard({
             }`}
           >
             {isSelected ? "Batalkan" : canSelectMore ? "Pilih kursi" : "Batas maks."}
+          </button>
+        )}
+        {onOpenVirtualView && (
+          <button
+            type="button"
+            onClick={() => onOpenVirtualView(seat)}
+            className="inline-flex min-h-9 items-center gap-1.5 rounded-button border border-line bg-page px-3 py-1.5 text-xs font-semibold text-ink hover:border-gate hover:text-gate transition"
+            title="Lihat simulasi sudut pandang panggung 3D dari kursi ini"
+          >
+            <Eye className="h-3.5 w-3.5 text-gate" />
+            <span className="hidden sm:inline">Lihat dari Kursi Ini</span>
+            <span className="sm:hidden">Lihat 3D</span>
           </button>
         )}
         <button

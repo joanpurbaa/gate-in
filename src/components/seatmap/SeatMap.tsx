@@ -206,6 +206,7 @@ export interface SeatMapProps {
   selectedLabels?: string[];
   maxSeats?: number;
   onToggleSeat?: (seat: SeatMapItem) => void;
+  onOpenVirtualView?: (seat: SeatMapItem) => void;
   showLegend?: boolean;
   className?: string;
 }
@@ -218,6 +219,7 @@ export function SeatMap({
   selectedLabels = [],
   maxSeats = 5,
   onToggleSeat,
+  onOpenVirtualView,
   showLegend = true,
   className = "",
 }: SeatMapProps) {
@@ -556,6 +558,7 @@ export function SeatMap({
           isSelected={selectedSet.has(focusedSeat.label)}
           canSelectMore={canSelectMore}
           onToggleSelect={onToggleSeat}
+          onOpenVirtualView={onOpenVirtualView}
           onClose={() => setFocusedLabel(null)}
         />
       )}

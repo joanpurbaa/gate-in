@@ -14,6 +14,7 @@ import {
 import { SeatMap } from "@/components/seatmap/SeatMap";
 import { SelectedSeatsBar, type SelectedSeatSummary } from "@/components/seatmap/SelectedSeatsBar";
 import { CheckoutDrawer, type AppliedPromoInfo } from "@/components/seatmap/CheckoutDrawer";
+import { VirtualSeatViewModal } from "@/components/seatview";
 import {
   ZONE_COLOR_PALETTE,
   type SeatEffectiveStatus,
@@ -70,6 +71,20 @@ export function BookingFlowClient({
   const [submittingHold, setSubmittingHold] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [lastSyncedAt, setLastSyncedAt] = useState<Date>(new Date());
+  const [virtualViewSeat, setVirtualViewSeat] = useState<SeatMapItem | null>(null);
+
+  const handleOpenVirtualView = useCallback(
+    (seatOrLabel: SeatMapItem | string | undefined) => {
+      if (!seatOrLabel) return;
+      if (typeof seatOrLabel === "string") {
+        const found = seats.find((s) => s.label === seatOrLabel);
+        if (found) setVirtualViewSeat(found);
+      } else {
+        setVirtualViewSeat(seatOrLabel);
+      }
+    },
+    [seats]
+  );
 
   // Promo otomatis nonaktif jika tidak ada kursi terpilih
   const effectivePromo = selectedLabels.length > 0 ? appliedPromo : null;
@@ -332,6 +347,7 @@ export function BookingFlowClient({
           selectedLabels={selectedLabels}
           maxSeats={event.maxSeatsPerOrder}
           onToggleSeat={handleToggleSeat}
+          onOpenVirtualView={handleOpenVirtualView}
         />
 
         {/* Bar Bawah Ringkasan Kursi Terpilih */}
@@ -345,6 +361,7 @@ export function BookingFlowClient({
               : "Pilih kursi pada denah"
           }
           onRemoveSeat={handleRemoveSeat}
+          onOpenVirtualView={handleOpenVirtualView}
           onSubmit={() => {
             if (selectedLabels.length > 0) {
               setFormError(null);
@@ -353,6 +370,22 @@ export function BookingFlowClient({
           }}
         />
       </section>
+
+      {/* Modal Simulasi Virtual Seat View 3D */}
+      {virtualViewSeat && (
+        <VirtualSeatViewModal
+          isOpen={Boolean(virtualViewSeat)}
+          onClose={() => setVirtualViewSeat(null)}
+          layout={layout}
+          seats={seats}
+          zones={zones}
+          initialSeat={virtualViewSeat}
+          selectedSeats={selectedLabels
+            .map((lbl) => seats.find((s) => s.label === lbl))
+            .filter((s): s is SeatMapItem => s != null)}
+          onSelectSeat={(seat) => setVirtualViewSeat(seat)}
+        />
+      )}
 
       {/* Drawer / Modal Checkout Terintegrasi */}
       <CheckoutDrawer

@@ -1,6 +1,6 @@
 "use client";
 
-import { X } from "lucide-react";
+import { Eye, X } from "lucide-react";
 import { formatRupiah } from "@/lib/money";
 
 export interface SelectedSeatSummary {
@@ -16,6 +16,7 @@ interface SelectedSeatsBarProps {
   loading?: boolean;
   ctaLabel?: string;
   onRemoveSeat: (label: string) => void;
+  onOpenVirtualView?: (label?: string) => void;
   onSubmit: () => void;
 }
 
@@ -25,6 +26,7 @@ export function SelectedSeatsBar({
   loading = false,
   ctaLabel = "Tahan kursi dan lanjut",
   onRemoveSeat,
+  onOpenVirtualView,
   onSubmit,
 }: SelectedSeatsBarProps) {
   const total = selected.reduce((acc, s) => acc + s.price, 0);
@@ -85,6 +87,18 @@ export function SelectedSeatsBar({
               {formatRupiah(total)}
             </span>
           </div>
+
+          {onOpenVirtualView && selected.length > 0 && (
+            <button
+              type="button"
+              onClick={() => onOpenVirtualView(selected[0]?.label)}
+              className="inline-flex min-h-12 items-center justify-center gap-1.5 rounded-button border border-line bg-card px-3.5 py-3 text-xs font-semibold text-ink hover:border-gate hover:text-gate transition shrink-0"
+              title="Lihat sudut pandang panggung 3D dari kursi yang Anda pilih"
+            >
+              <Eye className="h-4 w-4 text-gate" />
+              <span className="hidden sm:inline">Lihat 3D</span>
+            </button>
+          )}
 
           <button
             type="button"
