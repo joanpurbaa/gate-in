@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { normalizePhoneTo62 } from "@/lib/phone";
 import { holdSeatsAndCreateOrder, SeatsTakenError } from "@/lib/seats";
 import { claimWaitingListOffer } from "@/lib/waiting-list/service";
+import { auth } from "@/lib/auth-server";
 
 const createOrderSchema = z.object({
   eventId: z.string().min(1, "ID event wajib diisi"),
@@ -131,6 +132,19 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  // Periksa apakah pembeli memiliki sesi login aktif (Better Auth)
+  let userId: string | null = null;
+  try {
+    const session = await auth.api.getSession({
+      headers: req.headers,
+    });
+    if (session?.user?.id) {
+      userId = session.user.id;
+    }
+  } catch (err) {
+    console.warn("Gagal membaca sesi pada pembuatan order:", err);
+  }
+
   try {
     const held = await holdSeatsAndCreateOrder({
       eventId: event.id,
@@ -138,6 +152,7 @@ export async function POST(req: NextRequest) {
       buyerName,
       buyerPhone: phone62,
       promoCode: parsed.data.promoCode,
+      userId,
     });
 
     if (offerToken) {

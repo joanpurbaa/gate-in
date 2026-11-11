@@ -34,6 +34,37 @@ Agent: centang `[x]` setelah tahap lulus `lint` + `build` + verifikasi di `docs/
 
 ## Keputusan
 
+- **Implementasi Autentikasi Pengguna & Checkout Terintegrasi (Better Auth)**:
+  - **Stack & Arsitektur**:
+    - Mengintegrasikan library `better-auth` (`v1.7.20`) dengan `@better-auth/prisma-adapter` yang terhubung langsung ke Neon PostgreSQL melalui Prisma ORM.
+    - Menambahkan 4 tabel Better Auth pada skema database: `User` (`user`), `Session` (`session`), `Account` (`account`), dan `Verification` (`verification`).
+    - Menambahkan relasi `userId` opsional pada tabel `Order` (`Order.userId -> User.id`) sehingga seluruh pesanan dan tiket terhubung ke akun pengguna secara persisten tanpa memutus kompatibilitas pemesanan sebelumnya.
+    - Konfigurasi server (`src/lib/auth-server.ts`) menangani email/password serta OAuth sosial (Google dan Facebook) dengan auto account linking (`trustedProviders: ["google", "facebook"]`).
+    - Route handler Next.js App Router dibuat di `src/app/api/auth/[...all]/route.ts`.
+    - Helper server `src/lib/user-auth.ts` menyediakan fungsi `getCurrentUserSession()` untuk mengambil sesi pengguna aktif secara aman berbasis HTTP-only cookies.
+    - Client module `src/lib/auth-client.ts` mengekspos hooks reaktif `useSession()`, `signIn`, `signUp`, dan `signOut`.
+  - **Integrasi Alur Checkout (`CheckoutDrawer.tsx`)**:
+    - Bagian autentikasi disisipkan pada Langkah 3 tepat setelah input nomor WhatsApp.
+    - **Jika pengguna belum login**:
+      - Ditampilkan form terpadu berdesain elegan dengan dua tab: **Daftar** (Nama lengkap, Email, Password dengan toggle mata, tombol "Buat Akun") dan **Masuk** (Email, Password dengan toggle mata, tautan "Lupa password?", tombol "Masuk").
+      - Separator "atau lanjutkan dengan" dan tombol OAuth sosial untuk Google dan Facebook.
+      - Pendaftaran dan login bekerja penuh (real API). Jika email sudah terdaftar, pengguna diarahkan dengan pesan ramah untuk beralih ke tab Masuk.
+      - State form checkout (pemilihan kursi, nama pemesan, nomor WhatsApp, input promo) tidak ter-reset saat beralih tab atau menyelesaikan autentikasi.
+      - Tombol utama checkout "Konfirmasi & tahan kursi" mengintegrasikan pembuatan akun/login otomatis jika data akun telah diisi oleh pengunjung baru.
+    - **Jika pengguna sudah login**:
+      - Form pendaftaran/masuk disembunyikan total, digantikan oleh badge profil ringkas: avatar inisial/foto, nama, email, indikator "Login sebagai", tombol "Ganti akun", dan notifikasi bahwa e-ticket akan otomatis tersimpan ke akun.
+    - **Integritas Locking Kursi**:
+      - Pembukaan drawer atau form autentikasi TIDAK memicu penguncian kursi. Atomic seat locking (`FOR UPDATE`) tetap dieksekusi tepat pada langkah konfirmasi / submit order via `holdSeatsAndCreateOrder`.
+  - **Halaman Tiket Pengguna (`/my-tickets`) & Header Publik**:
+    - Menambahkan rute `/my-tickets` (`src/app/(public)/my-tickets/page.tsx` & `MyTicketsClientAuth.tsx`) yang menampilkan seluruh daftar tiket dan pesanan aktif maupun riwayat milik pengguna terautentikasi lengkap dengan status pembayaran, rincian kursi & zona, serta tombol cepat membuka E-Ticket dan QR Code.
+    - Jika pengguna belum login saat membuka `/my-tickets`, ditampilkan formulir masuk/daftar mandiri yang elegan.
+    - Menambahkan tombol akses cepat "Tiket Saya" / "Cek Tiket" pada navbar `PublicHeader.tsx` (desktop & mobile).
+  - **Verifikasi**:
+    - `npx tsc --noEmit` lolos 100% tanpa error.
+    - `npm run lint` bersih (0 warning, 0 error).
+    - `npm run build` sukses mengompilasi dan mengoptimasi seluruh 32 route (termasuk `/api/auth/[...all]` dan `/my-tickets`).
+    - Skrip pengujian balapan konkurensi `scripts/test-locking.ts` (8 pemesan paralel) lolos 100%.
+
 - **Tahap 14 (Halaman /docs Panduan Penggunaan & Pembersihan Tautan)**:
   - **Pembersihan Tautan "Keunggulan GateIn"**: Tautan `/#keunggulan-gatein` dihapus murni dari navbar `PublicFooter.tsx`, sementara section `#keunggulan-gatein` di beranda tetap utuh. Tidak ada tautan lain dengan tujuan atau teks tersebut di seluruh kode aplikasi.
   - **Rute Panduan `/docs` Ala Dokumentasi Next.js**:

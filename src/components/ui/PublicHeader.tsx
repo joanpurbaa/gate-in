@@ -3,8 +3,9 @@
 import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { MapPin, Search, X } from "lucide-react";
+import { MapPin, Search, Ticket, X } from "lucide-react";
 import { Logo } from "./Logo";
+import { authClient } from "@/lib/auth-client";
 
 export function PublicHeader() {
   const router = useRouter();
@@ -28,6 +29,8 @@ export function PublicHeader() {
       router.push(target);
     }
   };
+
+  const { data: session } = authClient.useSession();
 
   return (
     <>
@@ -62,12 +65,20 @@ export function PublicHeader() {
             </div>
           </form>
 
-          {/* Kanan desktop: chip kota + tombol Jelajahi Acara */}
+          {/* Kanan desktop: chip kota + tombol Tiket Saya + tombol Jelajahi Acara */}
           <div className="hidden items-center gap-2.5 md:flex">
             <span className="inline-flex h-10 items-center gap-1.5 rounded-full border border-line bg-page px-3.5 text-xs font-medium text-ink">
               <MapPin className="h-3.5 w-3.5 text-gate" aria-hidden="true" />
               <span>Bandung, Summarecon</span>
             </span>
+
+            <Link
+              href="/my-tickets"
+              className="inline-flex h-10 items-center gap-1.5 rounded-button border border-line bg-page px-3.5 text-xs font-semibold text-ink transition hover:border-gate hover:text-gate"
+            >
+              <Ticket className="h-3.5 w-3.5 text-gate" />
+              <span>{session?.user ? "Tiket Saya" : "Cek Tiket"}</span>
+            </Link>
 
             <Link
               href="/#daftar-acara"
@@ -77,16 +88,25 @@ export function PublicHeader() {
             </Link>
           </div>
 
-          {/* Kanan HP (390px): hanya ikon cari, membuka lapisan penuh */}
-          <button
-            type="button"
-            onClick={() => setMobileSearchOpen(true)}
-            aria-label="Cari acara, tempat, atau penyelenggara"
-            aria-expanded={mobileSearchOpen}
-            className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-line bg-page text-ink transition hover:bg-line/50 md:hidden"
-          >
-            <Search className="h-5 w-5" />
-          </button>
+          {/* Kanan HP (390px): ikon tiket + ikon cari */}
+          <div className="flex items-center gap-2 md:hidden">
+            <Link
+              href="/my-tickets"
+              aria-label="Tiket Saya"
+              className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-line bg-page text-ink transition hover:bg-line/50"
+            >
+              <Ticket className="h-5 w-5 text-gate" />
+            </Link>
+            <button
+              type="button"
+              onClick={() => setMobileSearchOpen(true)}
+              aria-label="Cari acara, tempat, atau penyelenggara"
+              aria-expanded={mobileSearchOpen}
+              className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-line bg-page text-ink transition hover:bg-line/50"
+            >
+              <Search className="h-5 w-5" />
+            </button>
+          </div>
         </div>
       </header>
 

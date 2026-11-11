@@ -52,6 +52,7 @@ export interface HoldSeatsInput {
   buyerPhone: string;
   holdDurationMs?: number;
   promoCode?: string;
+  userId?: string | null;
 }
 
 export interface HoldSeatsResult {
@@ -160,6 +161,10 @@ export async function holdSeatsAndCreateOrder(
         holdToken,
         holdExpiresAt,
       };
+
+      if (input.userId) {
+        orderData.userId = input.userId;
+      }
 
       if (appliedPromoId && discountAmount > 0) {
         orderData.originalAmount = originalAmount;
