@@ -83,6 +83,16 @@ Agent: centang `[x]` setelah tahap lulus `lint` + `build` + verifikasi di `docs/
     - Disimpan dalam format WebP terkompresi di `public/docs/` (seluruh berkas berukuran 4,6 KB s.d. 64 KB, jauh di bawah batas 200 KB).
     - Tangkapan layar tampilan `/docs` itu sendiri disimpan di `docs/screenshots/after-14/docs-390.png` dan `docs/screenshots/after-14/docs-1440.png`.
     - Database demo di-reset kembali secara bersih via `node prisma/seed.ts`.
+- **Perbaikan Origin Validation Better Auth di Vercel (`Invalid origin: https://*.vercel.app`)**:
+  - **Akar Masalah**:
+    - Better Auth secara default hanya mempercayai origin yang persis sama dengan `baseURL`.
+    - Di Vercel, deployment dapat memiliki domain produksi (`gate-in-id.vercel.app`) dan URL preview/branch unik (`gate-clxz8zow8-joan-purbas-projects.vercel.app`).
+    - Saat pengguna mencoba login sosial (Google/Facebook) dari URL preview Vercel, middleware `origin-check` Better Auth memblokir permintaan dengan pesan `ERROR [Better Auth]: Invalid origin: https://gate-clxz8zow8-joan-purbas-projects.vercel.app`.
+  - **Solusi yang Diterapkan (`src/lib/auth-server.ts`)**:
+    1. Menambahkan konfigurasi `trustedOrigins` dengan wildcard pattern `"https://*.vercel.app"` dan `"*.vercel.app"`, serta domain lokal (`localhost:3000`, `127.0.0.1:3000`), `NEXT_PUBLIC_APP_URL`, `VERCEL_URL`, dan `VERCEL_PROJECT_PRODUCTION_URL`.
+    2. Mengaktifkan opsi `advanced: { trustedProxyHeaders: true }` agar Better Auth mengenali header proxy Vercel (`x-forwarded-host`, `x-forwarded-proto`).
+  - **Verifikasi**: `npx tsc --noEmit` lolos, `npm run lint` bersih, dan `npm run build` berhasil 100%.
+
 - **Perbaikan Masalah CSS Hilang di Produksi Vercel (Tailwind CSS v4 & PostCSS)**:
   - **Akar Masalah**:
     - Proyek menggunakan Tailwind CSS v4 (`@import "tailwindcss";`) dengan Next.js 16.
