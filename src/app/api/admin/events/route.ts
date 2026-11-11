@@ -110,7 +110,7 @@ export async function POST(req: NextRequest) {
     return ev;
   });
 
-  await revalidateEventsCache();
+  await revalidateEventsCache(created.slug);
 
   return NextResponse.json(
     {

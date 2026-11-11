@@ -3,7 +3,8 @@ import { HomeFeedClient } from "@/components/home/HomeFeedClient";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { getCachedMarketplaceData } from "@/lib/cache";
 
-export const dynamic = "force-dynamic";
+// Regenerasi berkala bawaan Next.js (ISR) setiap 60 detik untuk kecepatan loading instan
+export const revalidate = 60;
 
 export default async function HomePage() {
   const { cards, totalEventsCount, totalSoldTicketsCount, explainerData } =

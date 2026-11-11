@@ -14,10 +14,24 @@ import { PosterImage } from "@/components/ui/PosterImage";
 import { StatusPill, computeSaleState } from "@/components/ui/StatusPill";
 import { EventDetailWaitingList } from "@/components/waiting-list/EventDetailWaitingList";
 import { getCachedEventDetail } from "@/lib/cache";
+import { prisma } from "@/lib/db";
 import { formatPriceRange, formatRupiah } from "@/lib/money";
 import { formatDateTime, formatShortDateTime, formatTimeRange } from "@/lib/time";
 
-export const dynamic = "force-dynamic";
+// Revalidasi data acara berkala maksimal tiap 30 detik (ISR)
+export const revalidate = 30;
+
+export async function generateStaticParams() {
+  try {
+    const events = await prisma.event.findMany({
+      where: { status: "PUBLISHED" },
+      select: { slug: true },
+    });
+    return events.map((e) => ({ slug: e.slug }));
+  } catch {
+    return [];
+  }
+}
 
 export default async function EventDetailPage({
   params,

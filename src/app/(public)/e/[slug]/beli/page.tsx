@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { computeSaleState } from "@/components/ui/StatusPill";
-import { prisma } from "@/lib/db";
+import { getCachedBookingEvent } from "@/lib/cache";
 import { parseLayout } from "@/lib/layout/validate";
 import { getWaitingListStatus } from "@/lib/waiting-list/service";
 import { BookingFlowClient } from "./BookingFlowClient";
@@ -19,27 +19,7 @@ export default async function EventBookingPage({
   const { slug } = await params;
   const { offer: offerToken } = await searchParams;
 
-  const event = await prisma.event.findUnique({
-    where: { slug },
-    include: {
-      zones: { orderBy: { sortOrder: "asc" } },
-      seats: {
-        orderBy: [{ rowLabel: "asc" }, { number: "asc" }],
-        select: {
-          id: true,
-          label: true,
-          rowLabel: true,
-          number: true,
-          x: true,
-          y: true,
-          rotation: true,
-          status: true,
-          heldUntil: true,
-          zoneId: true,
-        },
-      },
-    },
-  });
+  const event = await getCachedBookingEvent(slug);
 
   if (!event || event.status !== "PUBLISHED" || !event.layout) {
     notFound();

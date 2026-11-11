@@ -165,7 +165,7 @@ export async function PUT(
     }
   });
 
-  await revalidateEventsCache();
+  await revalidateEventsCache(existing.slug);
 
   return NextResponse.json({
     ok: true,

@@ -83,6 +83,33 @@ Agent: centang `[x]` setelah tahap lulus `lint` + `build` + verifikasi di `docs/
     - Disimpan dalam format WebP terkompresi di `public/docs/` (seluruh berkas berukuran 4,6 KB s.d. 64 KB, jauh di bawah batas 200 KB).
     - Tangkapan layar tampilan `/docs` itu sendiri disimpan di `docs/screenshots/after-14/docs-390.png` dan `docs/screenshots/after-14/docs-1440.png`.
     - Database demo di-reset kembali secara bersih via `node prisma/seed.ts`.
+- **Implementasi Sistem Caching Bawaan Next.js (Tanpa Redis / 3rd Party, Kecepatan Instan)**:
+  - **Tujuan**:
+    - Meniadakan perenderan ulang database berat pada akses berulang dalam rentang waktu tertentu.
+    - Menggunakan 100% fitur native Next.js App Router (`next/cache`, ISR, `unstable_cache`, `revalidateTag`, `revalidatePath`).
+    - Memaksimalkan kecepatan *Time to First Byte* (TTFB) dan penyajian halaman dalam hitungan milidetik (<5–10ms).
+  - **Arsitektur Caching Bertingkat (*Multi-Tier Architecture*)**:
+    1. **Tingkat 1 — L1 In-Process Memory Cache (RAM Node)**:
+       - Menyimpan hasil kueri di memori RAM proses untuk akses sub-milidetik (0ms) pada request yang tiba di instance yang sama.
+    2. **Tingkat 2 — L2 Next.js Native Data Cache (`unstable_cache`)**:
+       - `getCachedMarketplaceData()`: Meng-cache data agregasi beranda marketplace dengan TTL 60 detik (`revalidate: 60`) dan tags `["marketplace", "events"]`.
+       - `getCachedEventDetail(slug)`: Meng-cache detail acara publik dengan TTL 30 detik (`revalidate: 30`) dan tags `["events", "event-${slug}"]`.
+       - `getCachedBookingEvent(slug)`: Meng-cache struktur layout dan zona untuk halaman pemesanan tiket dengan TTL 15 detik (`revalidate: 15`).
+       - Dilengkapi proteksi *fallback* otomatis bila dieksekusi di luar konteks request Next.js (misal pada skrip uji mandiri).
+    3. **Tingkat 3 — Route-Level Incremental Static Regeneration (ISR)**:
+       - **Beranda (`src/app/(public)/page.tsx`)**: Menggantikan `dynamic = "force-dynamic"` menjadi `export const revalidate = 60;`. Halaman di-render sebagai konten statis siap saji dari Edge Cache / CDN.
+       - **Detail Acara (`src/app/(public)/e/[slug]/page.tsx`)**: Menggantikan `dynamic = "force-dynamic"` menjadi `export const revalidate = 30;` dan menyertakan `generateStaticParams()` untuk melakukan *pre-rendering* statis pada seluruh acara yang berstatus `PUBLISHED` saat build.
+    4. **Tingkat 4 — On-Demand Cache Invalidation (`revalidateEventsCache`)**:
+       - Dijalankan otomatis di route admin saat acara baru dibuat (`POST /api/admin/events`) atau diperbarui (`PATCH /api/admin/events/[id]`).
+       - Memanggil `revalidateTag(CACHE_TAGS.marketplace, { expire: 0 })`, `revalidateTag(CACHE_TAGS.events, { expire: 0 })`, dan `revalidatePath("/")` serta `/e/${slug}` untuk membersihkan cache seketika sehingga perubahan langsung tampil tanpa menunggu timer TTL habis.
+  - **Integritas Alur Transaksi**:
+    - Ketersediaan kursi saat pemilihan dan transaksi *war-ticket* (`/api/events/[slug]/seats` & `src/lib/seats.ts`) tetap real-time dan atomik untuk menjamin konsistensi ketersediaan kursi tanpa bentrok.
+  - **Hasil Verifikasi**:
+    - `npx tsc --noEmit`: Lolos 100% tanpa error.
+    - `npm run lint`: Bersih (0 warning, 0 error).
+    - `npm run build`: Berhasil mengompilasi dan men-generate static pre-rendered routes (33/33 static pages; route `/` revalidate 1m, route `/e/[slug]` SSG 30s).
+    - `scripts/test-locking.ts`: 3/3 uji balapan atomik (8 pemesan paralel) lolos 100%.
+
 - **Implementasi Fitur Virtual Seat View 3D (Simulasi Perspektif Mata Manusia)**:
   - **Tujuan & Arsitektur**:
     - Memberikan calon pembeli visualisasi 3D first-person perspective langsung dari posisi mata manusia ketika duduk di kursi yang mereka pilih, menghadap panggung utama.
