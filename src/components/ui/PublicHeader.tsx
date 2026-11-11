@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { MapPin, Search, Ticket, X } from "lucide-react";
+import { MapPin, Search, User, X } from "lucide-react";
 import { Logo } from "./Logo";
 import { authClient } from "@/lib/auth-client";
 
@@ -65,38 +65,80 @@ export function PublicHeader() {
             </div>
           </form>
 
-          {/* Kanan desktop: chip kota + tombol Tiket Saya + tombol Jelajahi Acara */}
+          {/* Kanan desktop: chip kota + profil user/masuk */}
           <div className="hidden items-center gap-2.5 md:flex">
             <span className="inline-flex h-10 items-center gap-1.5 rounded-full border border-line bg-page px-3.5 text-xs font-medium text-ink">
               <MapPin className="h-3.5 w-3.5 text-gate" aria-hidden="true" />
               <span>Bandung, Summarecon</span>
             </span>
 
-            <Link
-              href="/my-tickets"
-              className="inline-flex h-10 items-center gap-1.5 rounded-button border border-line bg-page px-3.5 text-xs font-semibold text-ink transition hover:border-gate hover:text-gate"
-            >
-              <Ticket className="h-3.5 w-3.5 text-gate" />
-              <span>{session?.user ? "Tiket Saya" : "Cek Tiket"}</span>
-            </Link>
-
-            <Link
-              href="/#daftar-acara"
-              className="inline-flex h-10 items-center rounded-button bg-gate px-4 text-xs font-semibold text-white transition hover:bg-gate-strong shadow-xs"
-            >
-              Jelajahi Acara
-            </Link>
+            {session?.user ? (
+              <Link
+                href="/my-tickets"
+                title="Buka akun & tiket saya"
+                className="inline-flex h-10 items-center gap-2 rounded-full border border-line bg-page px-3 text-xs font-semibold text-ink transition hover:border-gate shadow-2xs"
+              >
+                {session.user.image ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={session.user.image}
+                    alt={session.user.name || "Foto profil"}
+                    className="h-6 w-6 rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gate text-[11px] font-bold text-white">
+                    {(session.user.name || session.user.email || "U")
+                      .charAt(0)
+                      .toUpperCase()}
+                  </div>
+                )}
+                <span className="max-w-[140px] truncate">
+                  {session.user.name || session.user.email}
+                </span>
+              </Link>
+            ) : (
+              <Link
+                href="/login"
+                className="inline-flex h-10 items-center gap-1.5 rounded-full border border-line bg-page px-4 text-xs font-semibold text-ink transition hover:border-gate hover:text-gate shadow-2xs"
+              >
+                <User className="h-3.5 w-3.5 text-gate" />
+                <span>Masuk</span>
+              </Link>
+            )}
           </div>
 
-          {/* Kanan HP (390px): ikon tiket + ikon cari */}
+          {/* Kanan HP (390px): avatar/login + ikon cari */}
           <div className="flex items-center gap-2 md:hidden">
-            <Link
-              href="/my-tickets"
-              aria-label="Tiket Saya"
-              className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-line bg-page text-ink transition hover:bg-line/50"
-            >
-              <Ticket className="h-5 w-5 text-gate" />
-            </Link>
+            {session?.user ? (
+              <Link
+                href="/my-tickets"
+                aria-label="Akun & Tiket Saya"
+                className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-line bg-page text-ink transition hover:bg-line/50"
+              >
+                {session.user.image ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={session.user.image}
+                    alt={session.user.name || "Profil"}
+                    className="h-7 w-7 rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="flex h-7 w-7 items-center justify-center rounded-full bg-gate text-xs font-bold text-white">
+                    {(session.user.name || session.user.email || "U")
+                      .charAt(0)
+                      .toUpperCase()}
+                  </div>
+                )}
+              </Link>
+            ) : (
+              <Link
+                href="/login"
+                aria-label="Masuk ke Akun"
+                className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-line bg-page text-ink transition hover:bg-line/50"
+              >
+                <User className="h-5 w-5 text-gate" />
+              </Link>
+            )}
             <button
               type="button"
               onClick={() => setMobileSearchOpen(true)}
