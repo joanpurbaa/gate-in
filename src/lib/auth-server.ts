@@ -36,19 +36,11 @@ export const auth = betterAuth({
           },
         }
       : {}),
-    ...(process.env.FACEBOOK_CLIENT_ID && process.env.FACEBOOK_CLIENT_SECRET
-      ? {
-          facebook: {
-            clientId: process.env.FACEBOOK_CLIENT_ID,
-            clientSecret: process.env.FACEBOOK_CLIENT_SECRET,
-          },
-        }
-      : {}),
   },
   account: {
     accountLinking: {
       enabled: true,
-      trustedProviders: ["google", "facebook"],
+      trustedProviders: ["google"],
     },
   },
   trustedOrigins: [

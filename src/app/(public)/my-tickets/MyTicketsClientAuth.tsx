@@ -92,7 +92,7 @@ export function MyTicketsClientAuth({ loggedIn }: { loggedIn?: boolean }) {
     }
   };
 
-  const handleSocial = async (provider: "google" | "facebook") => {
+  const handleSocial = async (provider: "google" = "google") => {
     setError(null);
     setLoading(true);
     try {
@@ -104,7 +104,7 @@ export function MyTicketsClientAuth({ loggedIn }: { loggedIn?: boolean }) {
       const msg = err instanceof Error ? err.message : "Gagal menghubungkan OAuth.";
       setError(
         msg.includes("not found") || msg.includes("Provider")
-          ? `Login ${provider} belum dikonfigurasi di server.`
+          ? "Login Google belum dikonfigurasi di server."
           : msg
       );
       setLoading(false);
@@ -258,12 +258,12 @@ export function MyTicketsClientAuth({ loggedIn }: { loggedIn?: boolean }) {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-2">
+      <div>
         <button
           type="button"
           onClick={() => handleSocial("google")}
           disabled={loading}
-          className="inline-flex min-h-9 items-center justify-center gap-2 rounded-xl border border-line bg-page px-3 py-1.5 text-xs font-semibold text-ink hover:bg-line/40 disabled:opacity-50 transition"
+          className="inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-xl border border-line bg-page px-4 py-2 text-xs font-semibold text-ink hover:bg-line/40 disabled:opacity-50 transition shadow-2xs"
         >
           <svg className="h-4 w-4" viewBox="0 0 24 24">
             <path
@@ -283,19 +283,7 @@ export function MyTicketsClientAuth({ loggedIn }: { loggedIn?: boolean }) {
               d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98Z"
             />
           </svg>
-          <span>Google</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => handleSocial("facebook")}
-          disabled={loading}
-          className="inline-flex min-h-9 items-center justify-center gap-2 rounded-xl border border-line bg-page px-3 py-1.5 text-xs font-semibold text-ink hover:bg-line/40 disabled:opacity-50 transition"
-        >
-          <svg className="h-4 w-4 fill-[#1877F2]" viewBox="0 0 24 24">
-            <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
-          </svg>
-          <span>Facebook</span>
+          <span>Lanjutkan dengan Google</span>
         </button>
       </div>
     </div>
