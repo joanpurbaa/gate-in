@@ -57,7 +57,9 @@ export default async function EventBookingPage({
   }
 
   const initialSeats = event.seats.map((s) => {
-    const expired = s.status === "HELD" && (!s.heldUntil || s.heldUntil <= now);
+    const expired =
+      s.status === "HELD" &&
+      (!s.heldUntil || new Date(s.heldUntil) <= now);
     return {
       id: s.id,
       label: s.label,
@@ -117,9 +119,9 @@ export default async function EventBookingPage({
         slug: event.slug,
         name: event.name,
         venueName: event.venueName,
-        startsAt: event.startsAt.toISOString(),
-        gateOpenAt: event.gateOpenAt.toISOString(),
-        gateCloseAt: event.gateCloseAt.toISOString(),
+        startsAt: new Date(event.startsAt).toISOString(),
+        gateOpenAt: new Date(event.gateOpenAt).toISOString(),
+        gateCloseAt: new Date(event.gateCloseAt).toISOString(),
         maxSeatsPerOrder: activeOffer ? activeOffer.quantity : event.maxSeatsPerOrder,
       }}
       layout={layout}

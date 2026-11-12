@@ -43,3 +43,7 @@ next-env.d.ts
 # prisma generated client
 /src/generated/
 
+# video demo studio
+/.video-demo/
+/demo-out/
+

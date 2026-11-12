@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "skills": {
+    "video-demo": {
+      "source": "nilbuild/video-demo",
+      "sourceType": "github",
+      "skillPath": "SKILL.md",
+      "computedHash": "c1af3eb95fc289233d0a6dc66eaf85c2f661ccf94c175cfb707e8f91ffcec7cd"
+    }
+  }
+}
