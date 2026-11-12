@@ -12,6 +12,7 @@ if (!process.env.DATABASE_URL) {
 if (typeof WebSocket !== "undefined" && !neonConfig.webSocketConstructor) {
   neonConfig.webSocketConstructor = WebSocket;
 }
+neonConfig.poolQueryViaFetch = true;
 
 function createClient() {
   const connectionString = process.env.DATABASE_URL;
