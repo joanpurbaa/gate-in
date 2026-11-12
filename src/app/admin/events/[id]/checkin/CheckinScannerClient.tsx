@@ -10,6 +10,7 @@ import {
   CheckCircle2,
   Clock,
   Keyboard,
+  Loader2,
   XCircle,
 } from "lucide-react";
 import { SeatMap } from "@/components/seatmap/SeatMap";
@@ -47,8 +48,13 @@ export function CheckinScannerClient({
   const [scanResult, setScanResult] = useState<CheckinOutcome | null>(null);
 
   const [cameraActive, setCameraActive] = useState(false);
+  const [cameraStarting, setCameraStarting] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
-  const scannerRef = useRef<{ stop: () => Promise<void>; clear: () => void } | null>(null);
+  const scannerRef = useRef<{
+    stop: () => Promise<void>;
+    clear: () => void;
+    isScanning?: boolean;
+  } | null>(null);
   const busyScanRef = useRef(false);
 
   const [seats, setSeats] = useState<SeatMapItem[]>(initialSeats);
@@ -128,7 +134,9 @@ export function CheckinScannerClient({
   const stopCamera = useCallback(async () => {
     if (scannerRef.current) {
       try {
-        await scannerRef.current.stop();
+        if (scannerRef.current.isScanning) {
+          await scannerRef.current.stop();
+        }
         scannerRef.current.clear();
       } catch {
         // Abaikan error saat stop
@@ -136,41 +144,121 @@ export function CheckinScannerClient({
       scannerRef.current = null;
     }
     setCameraActive(false);
+    setCameraStarting(false);
   }, []);
 
   const startCamera = async () => {
+    if (cameraStarting || cameraActive) return;
+    setCameraStarting(true);
     setCameraError(null);
+
     try {
       const { Html5Qrcode } = await import("html5-qrcode");
+
+      // Pastikan instance scanner sebelumnya dibersihkan jika masih menggantung
+      if (scannerRef.current) {
+        try {
+          if (scannerRef.current.isScanning) {
+            await scannerRef.current.stop();
+          }
+          scannerRef.current.clear();
+        } catch {
+          // Abaikan
+        }
+        scannerRef.current = null;
+      }
+
       const scanner = new Html5Qrcode("gatein-qr-reader");
       scannerRef.current = scanner;
-      setCameraActive(true);
 
-      await scanner.start(
-        { facingMode: "environment" },
-        { fps: 10, qrbox: { width: 220, height: 220 } },
-        (decodedText) => {
-          // Ekstrak kode tiket bila yang di-scan adalah URL penuh `/tiket/KODETIKET`
-          const parts = decodedText.trim().split("/");
-          const extracted = parts[parts.length - 1] || decodedText;
-          verifyCode(extracted);
-        },
-        () => {
-          // Frame tanpa QR diabaikan
+      // Deteksi kamera yang tersedia (laptop front camera vs smartphone back camera)
+      let selectedCamera: string | { facingMode: string } = { facingMode: "environment" };
+
+      try {
+        const devices = await Html5Qrcode.getCameras();
+        if (devices && devices.length > 0) {
+          // Cari kamera belakang jika ada (untuk smartphone panitia check-in)
+          const backCam = devices.find((d) =>
+            /back|rear|environment|belakang/i.test(d.label)
+          );
+          // Gunakan kamera belakang jika ada; jika laptop (FaceTime/webcam), gunakan device pertama
+          selectedCamera = backCam ? backCam.id : devices[0].id;
         }
-      );
-    } catch {
+      } catch {
+        // Fallback jika enumerasi kamera diblokir sebelum izin
+        selectedCamera = { facingMode: "environment" };
+      }
+
+      // qrbox dinamis agar proporsional dan tidak pernah melebihi ukuran viewfinder
+      const qrConfig = {
+        fps: 10,
+        qrbox: (viewfinderWidth: number, viewfinderHeight: number) => {
+          const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
+          const size = Math.max(Math.floor(minEdge * 0.7), 160);
+          return {
+            width: Math.min(size, 260),
+            height: Math.min(size, 260),
+          };
+        },
+      };
+
+      const onScanSuccess = (decodedText: string) => {
+        // Ekstrak kode tiket bila yang di-scan adalah URL penuh `/tiket/KODETIKET`
+        const parts = decodedText.trim().split("/");
+        const extracted = parts[parts.length - 1] || decodedText;
+        verifyCode(extracted);
+      };
+
+      const onScanError = () => {
+        // Frame tanpa QR diabaikan
+      };
+
+      try {
+        await scanner.start(selectedCamera, qrConfig, onScanSuccess, onScanError);
+      } catch (firstErr) {
+        // Jika gagal dengan environment constraint (pada laptop/browser tertentu), coba fallback ke user
+        if (typeof selectedCamera === "object" && selectedCamera.facingMode === "environment") {
+          await scanner.start({ facingMode: "user" }, qrConfig, onScanSuccess, onScanError);
+        } else {
+          throw firstErr;
+        }
+      }
+
+      setCameraActive(true);
+    } catch (err) {
+      console.error("Gagal memulai scanner kamera:", err);
+      if (scannerRef.current) {
+        try {
+          if (scannerRef.current.isScanning) {
+            await scannerRef.current.stop();
+          }
+          scannerRef.current.clear();
+        } catch {
+          // Abaikan
+        }
+        scannerRef.current = null;
+      }
       setCameraActive(false);
       setCameraError(
-        "Izin kamera ditolak atau kamera tidak ditemukan. Gunakan kolom input kode manual di bawah."
+        "Kamera tidak dapat diakses atau izin ditolak. Pastikan izin kamera aktif di browser Anda atau gunakan kolom input kode manual di samping."
       );
+    } finally {
+      setCameraStarting(false);
     }
   };
 
   useEffect(() => {
     return () => {
       if (scannerRef.current) {
-        scannerRef.current.stop().catch(() => null);
+        try {
+          if (scannerRef.current.isScanning) {
+            scannerRef.current.stop().catch(() => null);
+          } else {
+            scannerRef.current.clear();
+          }
+        } catch {
+          // Abaikan
+        }
       }
     };
   }, []);
@@ -305,24 +393,49 @@ export function CheckinScannerClient({
             ) : (
               <button
                 type="button"
+                disabled={cameraStarting}
                 onClick={startCamera}
-                className="inline-flex items-center gap-1 rounded-lg bg-gate px-3 py-1.5 text-xs font-semibold text-white hover:bg-gate-strong"
+                className="inline-flex items-center gap-1 rounded-lg bg-gate px-3 py-1.5 text-xs font-semibold text-white hover:bg-gate-strong disabled:opacity-60"
               >
-                <Camera className="h-3.5 w-3.5" />
-                <span>Aktifkan Kamera</span>
+                {cameraStarting ? (
+                  <>
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    <span>Menghubungkan...</span>
+                  </>
+                ) : (
+                  <>
+                    <Camera className="h-3.5 w-3.5" />
+                    <span>Aktifkan Kamera</span>
+                  </>
+                )}
               </button>
             )}
           </div>
 
-          <div
-            id="gatein-qr-reader"
-            className="mt-3 flex min-h-[220px] items-center justify-center overflow-hidden rounded-xl border border-dashed border-line bg-ink text-center text-xs text-muted"
-          >
+          <div className="relative mt-3 min-h-[260px] overflow-hidden rounded-xl border border-dashed border-line bg-ink">
+            {/* Wadah khusus Html5Qrcode murni tanpa anak JSX agar React tidak menghapus elemen video saat re-render */}
+            <div
+              id="gatein-qr-reader"
+              className="w-full overflow-hidden rounded-xl [&_video]:w-full [&_video]:h-auto [&_video]:max-h-[420px] [&_video]:object-cover [&_video]:rounded-xl"
+            />
+
             {!cameraActive && (
-              <span className="px-4">
-                Tekan &ldquo;Aktifkan Kamera&rdquo; untuk memindai QR e-ticket dari layar ponsel
-                pengunjung.
-              </span>
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-ink p-4 text-center text-xs text-muted">
+                {cameraStarting ? (
+                  <div className="flex flex-col items-center gap-2">
+                    <Loader2 className="h-6 w-6 animate-spin text-gate" />
+                    <span className="font-semibold text-white">Menghubungkan ke kamera...</span>
+                    <span className="text-[11px] text-muted">
+                      Mohon berikan izin akses kamera jika diminta oleh browser.
+                    </span>
+                  </div>
+                ) : (
+                  <span>
+                    Tekan &ldquo;Aktifkan Kamera&rdquo; untuk memindai QR e-ticket dari layar ponsel
+                    pengunjung.
+                  </span>
+                )}
+              </div>
             )}
           </div>
 
